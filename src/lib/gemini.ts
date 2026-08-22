@@ -124,12 +124,6 @@ Write a result that:
 // ── Fallback Narratives ─────────────────────────────────────────────
 // Used when Gemini is unavailable (no API key, rate limited, etc.)
 
-const FRIENDSHIP_TYPES: Record<string, string> = {
-  high_bond: "Kindred Spirits",
-  medium_bond: "The Dynamic Duo",
-  low_bond: "The Unlikely Pair",
-};
-
 const DIM_NAMES: Record<Dimension, string> = {
   trust: "trust",
   loyalty: "loyalty",

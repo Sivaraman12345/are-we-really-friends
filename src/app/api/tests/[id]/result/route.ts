@@ -8,7 +8,7 @@ import {
 } from "@/lib/db";
 import { computeComparison } from "@/lib/scoring";
 import { generateResultNarrative } from "@/lib/gemini";
-import type { DimensionScores, Comparison } from "@/lib/types";
+import type { DimensionScores } from "@/lib/types";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
