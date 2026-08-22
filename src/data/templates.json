@@ -1,0 +1,498 @@
+[
+  {
+    "slot_id": "trust_1",
+    "theme": "trust",
+    "scores": {
+      "A": { "trust": 2, "adventure": 1 },
+      "B": { "trust": -1, "conflict_handling": 2 },
+      "C": { "trust": 1, "communication": 2 }
+    },
+    "variants": [
+      {
+        "id": "trust_1_bold",
+        "tendency": "bold",
+        "situation": "You and your friend stumble upon an old, creaking bridge deep in the forest. The path beyond it leads to a breathtaking waterfall you've both always wanted to see, but the bridge looks like it hasn't been maintained in years. Your friend starts walking across without hesitation and calls back to you.",
+        "choice_texts": {
+          "A": "Follow them onto the bridge without a second thought — if they trust it, so do you.",
+          "B": "Call out to them to stop and come back. You'll find another way around together.",
+          "C": "Test the first few planks carefully yourself, then wave them back so you can cross together slowly."
+        }
+      },
+      {
+        "id": "trust_1_thoughtful",
+        "tendency": "thoughtful",
+        "situation": "A stranger at the market offers you both a mysterious sealed jar, claiming it contains the rarest spice in the world. Your friend wants to buy it, but the price is steep and there's no way to verify what's inside without opening it first.",
+        "choice_texts": {
+          "A": "Go along with it — your friend's instinct has been right before, and the story alone is worth it.",
+          "B": "Gently suggest walking away. You'd rather not waste money on something that could be sawdust.",
+          "C": "Playfully suggest asking the vendor more questions together — you want to understand before committing."
+        }
+      }
+    ]
+  },
+  {
+    "slot_id": "trust_2",
+    "theme": "trust",
+    "scores": {
+      "A": { "trust": 2, "empathy": 1 },
+      "B": { "communication": 2, "trust": 1 },
+      "C": { "loyalty": 1, "trust": -1 }
+    },
+    "variants": [
+      {
+        "id": "trust_2_bold",
+        "tendency": "bold",
+        "situation": "Your friend dares you both to sneak into an abandoned amusement park after hours. The fence has a gap, and moonlight is casting wild shadows across the empty rides. They're already halfway through the gap, grinning.",
+        "choice_texts": {
+          "A": "Squeeze through right behind them — this is exactly the kind of stupid-brilliant thing you live for.",
+          "B": "Suggest at least texting someone where you're going, then climb through. Safety first, adventure second.",
+          "C": "Hang back and keep watch from outside — someone should stay sensible in case things go sideways."
+        }
+      },
+      {
+        "id": "trust_2_thoughtful",
+        "tendency": "thoughtful",
+        "situation": "Your friend confides in you about a secret they've been keeping — something deeply personal that they've never told anyone else. They seem nervous as they share it, watching your face for a reaction.",
+        "choice_texts": {
+          "A": "Listen without interrupting, then tell them you're honored they trusted you with this.",
+          "B": "Share one of your own secrets back — to show them they're not alone in being vulnerable.",
+          "C": "Immediately start brainstorming how you can help fix or solve the situation they described."
+        }
+      }
+    ]
+  },
+  {
+    "slot_id": "trust_3",
+    "theme": "trust",
+    "scores": {
+      "A": { "trust": 2, "loyalty": 1 },
+      "B": { "communication": 2, "conflict_handling": 1 },
+      "C": { "trust": -1, "empathy": 1 }
+    },
+    "variants": [
+      {
+        "id": "trust_3_bold",
+        "tendency": "bold",
+        "situation": "Your friend asks you to cosign a loan for a motorcycle they've been dreaming about. They swear they'll pay every installment. You know they mean it — but you also know their track record with money is… creative.",
+        "choice_texts": {
+          "A": "Sign it. They'd do the same for you, and some things matter more than credit scores.",
+          "B": "Be honest: you believe in them but need to talk through a repayment plan first.",
+          "C": "Say you need to think about it — you don't want to risk the friendship over money."
+        }
+      },
+      {
+        "id": "trust_3_thoughtful",
+        "tendency": "thoughtful",
+        "situation": "You discover that your friend accidentally shared something private about you with someone else. They apologize genuinely, saying it slipped out in conversation and they feel terrible about it.",
+        "choice_texts": {
+          "A": "Accept their apology and move on — everyone makes mistakes, and you know they didn't mean it.",
+          "B": "Tell them honestly that it hurt, but you want to talk it through so it doesn't happen again.",
+          "C": "Say it's fine but quietly decide to be more careful about what you share with them."
+        }
+      }
+    ]
+  },
+  {
+    "slot_id": "loyalty_1",
+    "theme": "loyalty",
+    "scores": {
+      "A": { "loyalty": 2, "conflict_handling": 1 },
+      "B": { "loyalty": 1, "trust": 2 },
+      "C": { "humor": 1, "conflict_handling": 2 }
+    },
+    "variants": [
+      {
+        "id": "loyalty_1_bold",
+        "tendency": "bold",
+        "situation": "At a crowded gathering, someone starts talking behind your friend's back — and they don't know it's happening. The person is saying some pretty unflattering things, and a few people nearby are starting to laugh along.",
+        "choice_texts": {
+          "A": "Step in and shut it down — tell them to say it to your friend's face or not at all.",
+          "B": "Quietly find your friend and let them know what's being said, so they can decide how to handle it.",
+          "C": "Change the subject with the group and steer the conversation somewhere else — no drama needed."
+        }
+      },
+      {
+        "id": "loyalty_1_thoughtful",
+        "tendency": "thoughtful",
+        "situation": "Your friend is being excluded from a group chat that most of your mutual friends are in. Nobody said anything mean — they just 'forgot' to add them. You notice your friend doesn't know yet.",
+        "choice_texts": {
+          "A": "Bring it up with the group directly: 'Hey, you forgot to add [friend].' Make it their problem to fix.",
+          "B": "Tell your friend privately so they can decide whether they even care about being in the chat.",
+          "C": "Start including your friend in conversations naturally until someone adds them — no confrontation needed."
+        }
+      }
+    ]
+  },
+  {
+    "slot_id": "loyalty_2",
+    "theme": "loyalty",
+    "scores": {
+      "A": { "loyalty": 2, "empathy": 1 },
+      "B": { "communication": 2, "loyalty": 1 },
+      "C": { "empathy": 2, "communication": 1 }
+    },
+    "variants": [
+      {
+        "id": "loyalty_2_bold",
+        "tendency": "bold",
+        "situation": "Your friend calls you in the middle of the night, clearly upset but not explaining why. They just ask if you can come meet them at the old lighthouse on the edge of town.",
+        "choice_texts": {
+          "A": "Get dressed and head out immediately — no questions asked. They need you.",
+          "B": "Ask if everything is safe first, then head out. You want to help but need to know what you're walking into.",
+          "C": "Suggest they come to your place instead — it's safer and warmer, and you can talk properly there."
+        }
+      },
+      {
+        "id": "loyalty_2_thoughtful",
+        "tendency": "thoughtful",
+        "situation": "Your friend has been working on a creative project for months and finally shows it to you. Honestly, it's not great — the execution is rough and there are obvious problems. But you can see how much it means to them.",
+        "choice_texts": {
+          "A": "Focus on what you genuinely love about it and encourage them to keep going — the passion matters more than perfection.",
+          "B": "Be honest about the weak spots, but frame it constructively — real friends help each other improve.",
+          "C": "Ask them how they feel about it first. Maybe they already know what needs work and just need support."
+        }
+      }
+    ]
+  },
+  {
+    "slot_id": "loyalty_3",
+    "theme": "loyalty",
+    "scores": {
+      "A": { "loyalty": 2, "trust": 1 },
+      "B": { "humor": 2, "conflict_handling": 1 },
+      "C": { "adventure": 1, "empathy": 1 }
+    },
+    "variants": [
+      {
+        "id": "loyalty_3_bold",
+        "tendency": "bold",
+        "situation": "You and your friend are both up for the same award at school. You know your entry is strong, but you also know your friend has been dreaming about this for years. The results are about to be announced.",
+        "choice_texts": {
+          "A": "Genuinely hope they win — your friendship matters more than any trophy.",
+          "B": "Make a pact: whoever wins buys the other person dinner. May the best entry win.",
+          "C": "Focus on your own work and let the judges decide. Competing fairly is not disloyal."
+        }
+      },
+      {
+        "id": "loyalty_3_thoughtful",
+        "tendency": "thoughtful",
+        "situation": "A new person in your social circle is becoming close with your friend — and you're surprised to feel a pang of jealousy. They're not replacing you, but the dynamic is definitely shifting.",
+        "choice_texts": {
+          "A": "Make an effort to welcome the new person. If your friend likes them, there's probably something good there.",
+          "B": "Joke about it openly with your friend — 'Should I be worried about being replaced?' Humor disarms jealousy.",
+          "C": "Spend some one-on-one time with the new person yourself. Maybe you'll end up with two great friends."
+        }
+      }
+    ]
+  },
+  {
+    "slot_id": "empathy_1",
+    "theme": "empathy",
+    "scores": {
+      "A": { "empathy": 2, "trust": 1 },
+      "B": { "empathy": 1, "communication": 2 },
+      "C": { "communication": 1, "loyalty": 2 }
+    },
+    "variants": [
+      {
+        "id": "empathy_1_bold",
+        "tendency": "bold",
+        "situation": "You're both on a challenging mountain hike when your friend starts struggling with the altitude. They're embarrassed because you're handling it fine. They insist on pushing forward even though they're clearly uncomfortable.",
+        "choice_texts": {
+          "A": "Admit you're tired too (even if you're not) — no one likes feeling like the weak link.",
+          "B": "Suggest resting at a beautiful viewpoint — frame it as wanting to enjoy the scenery, not as them needing a break.",
+          "C": "Cheer them on enthusiastically — you believe in them, and the summit view will be worth it."
+        }
+      },
+      {
+        "id": "empathy_1_thoughtful",
+        "tendency": "thoughtful",
+        "situation": "Your friend seems off lately — quieter than usual, distracted, canceling plans at the last minute. When you ask if something's wrong, they say they're fine with a smile that doesn't quite reach their eyes.",
+        "choice_texts": {
+          "A": "Sit with them quietly and say, 'You don't have to talk about it, but I'm here when you're ready.'",
+          "B": "Plan something small and low-pressure — a walk, a quiet coffee — to give them space to open up naturally.",
+          "C": "Tell them directly that you can see they're not fine, and you won't pretend otherwise."
+        }
+      }
+    ]
+  },
+  {
+    "slot_id": "empathy_2",
+    "theme": "empathy",
+    "scores": {
+      "A": { "empathy": 2, "communication": 1 },
+      "B": { "humor": 2, "loyalty": 1 },
+      "C": { "loyalty": 2, "empathy": -1 }
+    },
+    "variants": [
+      {
+        "id": "empathy_2_bold",
+        "tendency": "bold",
+        "situation": "Your friend just got some bad news — they didn't get into the program they applied to. They're trying to play it cool, but you can tell they're devastated.",
+        "choice_texts": {
+          "A": "Skip the silver-lining talk and just say, 'That sucks. I'm sorry.' Sometimes acknowledgment is enough.",
+          "B": "Take them out to do something fun and distracting — they can process it later, right now they need to not think about it.",
+          "C": "Start researching alternatives and present them with a plan B — you want to fix this for them."
+        }
+      },
+      {
+        "id": "empathy_2_thoughtful",
+        "tendency": "thoughtful",
+        "situation": "Your friend is venting angrily about a coworker who wronged them. You actually think your friend might have played a part in the conflict too, but they're clearly not ready to hear that right now.",
+        "choice_texts": {
+          "A": "Just listen and validate their frustration. Being heard is what they need, not a verdict.",
+          "B": "Lighten the mood by dramatizing the story to absurd proportions — sometimes laughing at a problem shrinks it.",
+          "C": "Tell them what you think right now — dancing around it will only let the problem fester."
+        }
+      }
+    ]
+  },
+  {
+    "slot_id": "communication_1",
+    "theme": "communication",
+    "scores": {
+      "A": { "communication": 2, "trust": 1 },
+      "B": { "loyalty": 2, "empathy": 1 },
+      "C": { "communication": 1, "adventure": 2 }
+    },
+    "variants": [
+      {
+        "id": "communication_1_bold",
+        "tendency": "bold",
+        "situation": "You and your friend made plans weeks ago, but something better just came up for the same day. You know canceling would disappoint them, but this other opportunity is genuinely exciting.",
+        "choice_texts": {
+          "A": "Be upfront — explain the situation and ask if you can reschedule. Honesty beats a white lie every time.",
+          "B": "Keep the original plans. A commitment is a commitment, and your friend made time for you.",
+          "C": "See if there's a way to do both — invite your friend to the other thing, or squeeze in a shorter version of your plans."
+        }
+      },
+      {
+        "id": "communication_1_thoughtful",
+        "tendency": "thoughtful",
+        "situation": "Your friend sends you a long, heartfelt message at 2 AM about how much your friendship means to them. It catches you off guard — they're not usually this open. You're reading it the next morning over coffee.",
+        "choice_texts": {
+          "A": "Write back just as honestly. Tell them exactly what they mean to you too.",
+          "B": "Call them. Some things deserve a voice, not a text. Even if it's a little awkward.",
+          "C": "Suggest meeting up today to celebrate the friendship in person — messages only go so far."
+        }
+      }
+    ]
+  },
+  {
+    "slot_id": "communication_2",
+    "theme": "communication",
+    "scores": {
+      "A": { "communication": 2, "conflict_handling": 1 },
+      "B": { "empathy": 2, "trust": 1 },
+      "C": { "humor": 2, "communication": 1 }
+    },
+    "variants": [
+      {
+        "id": "communication_2_bold",
+        "tendency": "bold",
+        "situation": "You overhear your friend telling someone else about a problem you thought was just between the two of you. They weren't being malicious — they genuinely wanted advice — but it still stings.",
+        "choice_texts": {
+          "A": "Bring it up calmly: 'Hey, I overheard you talking about X. Can we talk about what happened?'",
+          "B": "Let it go — they clearly needed someone else's perspective, and that's okay.",
+          "C": "Mention it casually, with humor: 'So I'm famous now? I heard my name come up…'"
+        }
+      },
+      {
+        "id": "communication_2_thoughtful",
+        "tendency": "thoughtful",
+        "situation": "You and your friend have a long-running inside joke that you always thought was mutual fun. But lately you've noticed them flinching slightly when you bring it up. Maybe it's stopped being funny for them.",
+        "choice_texts": {
+          "A": "Ask directly: 'Hey, is this joke still cool? I'd never want to make you uncomfortable.'",
+          "B": "Just quietly retire the joke. You noticed the flinch — that's enough information.",
+          "C": "Replace it with something new — come up with a fresh inside joke that's more 'now'."
+        }
+      }
+    ]
+  },
+  {
+    "slot_id": "adventure_1",
+    "theme": "adventure",
+    "scores": {
+      "A": { "adventure": 2, "trust": 1 },
+      "B": { "humor": 2, "adventure": 1 },
+      "C": { "communication": 1, "adventure": -1 }
+    },
+    "variants": [
+      {
+        "id": "adventure_1_bold",
+        "tendency": "bold",
+        "situation": "Your friend bursts through your door on a random Tuesday evening and says, 'Pack a bag — we're driving to the coast. I'll explain on the way.' No context, no plan, just energy.",
+        "choice_texts": {
+          "A": "Grab your keys and go. Life's too short for overthinking, and this is exactly why you're friends.",
+          "B": "Ask a few quick questions while packing — not to stall, just to figure out what kind of snacks to bring.",
+          "C": "Rain check it for the weekend when you can actually plan properly and enjoy it more."
+        }
+      },
+      {
+        "id": "adventure_1_thoughtful",
+        "tendency": "thoughtful",
+        "situation": "You're both at a festival in a city neither of you knows well. Your friend spots a narrow side street with live music drifting out and wants to explore. You were heading toward the main stage to catch a band you actually planned to see.",
+        "choice_texts": {
+          "A": "Ditch the plan — the best moments are always the unplanned ones. Follow the music.",
+          "B": "Make it a game: 'Five minutes down the alley, then we sprint to the main stage. Ready? Go.'",
+          "C": "Suggest catching the main band first (it's timed) then exploring the side street after (it'll still be there)."
+        }
+      }
+    ]
+  },
+  {
+    "slot_id": "adventure_2",
+    "theme": "adventure",
+    "scores": {
+      "A": { "adventure": 2, "loyalty": 1 },
+      "B": { "adventure": 1, "trust": 2 },
+      "C": { "communication": 2, "empathy": 1 }
+    },
+    "variants": [
+      {
+        "id": "adventure_2_bold",
+        "tendency": "bold",
+        "situation": "Your friend wants to try something completely outside both your comfort zones — signing up for an open-mic night where you'd have to perform together in front of strangers. Neither of you are performers.",
+        "choice_texts": {
+          "A": "Say yes immediately. The whole point is that it's terrifying — and terrifying together is bonding.",
+          "B": "Agree, but only if you can practice beforehand. You're in, but prepared.",
+          "C": "Suggest watching this time and signing up next month if it looks fun. Easing in is okay."
+        }
+      },
+      {
+        "id": "adventure_2_thoughtful",
+        "tendency": "thoughtful",
+        "situation": "You and your friend are at a fork in a hiking trail. The well-marked path leads to a popular lookout. A faint, unmarked trail disappears into dense trees with no signs. Your friend is already studying the unmarked one.",
+        "choice_texts": {
+          "A": "Take the unmarked trail. You came here for an experience, not a postcard.",
+          "B": "Agree but set ground rules — phone GPS on, and if the trail dead-ends in 30 minutes, you turn back.",
+          "C": "Hear them out, then share your honest preference. You want both of you to enjoy the choice."
+        }
+      }
+    ]
+  },
+  {
+    "slot_id": "conflict_handling_1",
+    "theme": "conflict_handling",
+    "scores": {
+      "A": { "conflict_handling": 2, "communication": 1 },
+      "B": { "trust": 2, "humor": 1 },
+      "C": { "loyalty": 2, "conflict_handling": 1 }
+    },
+    "variants": [
+      {
+        "id": "conflict_handling_1_bold",
+        "tendency": "bold",
+        "situation": "You and your friend are planning a trip together, and you fundamentally disagree on the destination. You want the mountains; they want the beach. Both of you feel strongly, and the discussion is getting heated.",
+        "choice_texts": {
+          "A": "Propose a compromise: a coastal town with mountain trails nearby. Nobody gets everything, but nobody loses either.",
+          "B": "Suggest flipping a coin — and genuinely committing to whatever it lands on. Take the ego out of it.",
+          "C": "Let them pick this time. You'll pick next time. Keeping score fairly is better than arguing now."
+        }
+      },
+      {
+        "id": "conflict_handling_1_thoughtful",
+        "tendency": "thoughtful",
+        "situation": "Your friend borrows something valuable from you and returns it damaged. They offer to pay for the repair, but you can tell they're already financially stressed. The item meant a lot to you, though.",
+        "choice_texts": {
+          "A": "Suggest splitting the cost — a fair middle ground that doesn't punish either of you.",
+          "B": "Tell them not to worry about the money, and mean it. Trust that they'd do the same for you.",
+          "C": "Accept their offer to repair it. They want to make it right, and letting them preserves their dignity."
+        }
+      }
+    ]
+  },
+  {
+    "slot_id": "conflict_handling_2",
+    "theme": "conflict_handling",
+    "scores": {
+      "A": { "conflict_handling": 2, "empathy": 1 },
+      "B": { "communication": 2, "loyalty": 1 },
+      "C": { "empathy": 1, "conflict_handling": 1 }
+    },
+    "variants": [
+      {
+        "id": "conflict_handling_2_bold",
+        "tendency": "bold",
+        "situation": "Your friend snaps at you in front of other people over something minor. It's clear they're stressed about something else entirely, but it still stings. Everyone's watching to see what you'll do.",
+        "choice_texts": {
+          "A": "Deflect with grace — 'Whoa, rough day? Let's grab a coffee and you can tell me about it.'",
+          "B": "Pull them aside privately: 'I know something's going on, but that wasn't okay. Talk to me.'",
+          "C": "Let it slide in the moment — but bring it up later when they're calmer."
+        }
+      },
+      {
+        "id": "conflict_handling_2_thoughtful",
+        "tendency": "thoughtful",
+        "situation": "You and your friend had a stupid argument last week and haven't spoken since. It was both your faults, and the silence is getting more awkward by the day. Neither of you wants to text first.",
+        "choice_texts": {
+          "A": "Text first: 'That was dumb. We're dumb. Wanna grab food?' Short, honest, no overthinking.",
+          "B": "Write a proper message acknowledging your part in it and asking to talk.",
+          "C": "Wait a bit longer — sometimes people need space, and rushing reconciliation can feel forced."
+        }
+      }
+    ]
+  },
+  {
+    "slot_id": "humor_1",
+    "theme": "humor",
+    "scores": {
+      "A": { "humor": 2, "communication": 1 },
+      "B": { "adventure": 2, "humor": 1 },
+      "C": { "empathy": 2, "humor": 1 }
+    },
+    "variants": [
+      {
+        "id": "humor_1_bold",
+        "tendency": "bold",
+        "situation": "You're both stuck waiting in an absurdly long line — it hasn't moved in 20 minutes, there's no shade, and the situation is objectively miserable. You can feel both your moods souring.",
+        "choice_texts": {
+          "A": "Start a ridiculous people-watching commentary. 'That guy? Definitely a retired spy. Look at the shoes.'",
+          "B": "Propose ditching the line entirely and finding something unexpected to do instead.",
+          "C": "Commiserate together — sometimes shared complaining IS the bonding experience."
+        }
+      },
+      {
+        "id": "humor_1_thoughtful",
+        "tendency": "thoughtful",
+        "situation": "It starts absolutely pouring rain during what was supposed to be a perfect outdoor day. No umbrellas, no shelter nearby, and your carefully planned outing is ruined. Your friend looks at you, soaked.",
+        "choice_texts": {
+          "A": "Start dancing in the rain — if you're going to get soaked anyway, might as well make it a memory.",
+          "B": "Make a dramatic sprint for the nearest cafe, narrating the whole thing like a nature documentary.",
+          "C": "Accept it philosophically — 'Some of the best days start with everything going wrong.' Settle in."
+        }
+      }
+    ]
+  },
+  {
+    "slot_id": "humor_2",
+    "theme": "humor",
+    "scores": {
+      "A": { "humor": 2, "trust": 1 },
+      "B": { "loyalty": 2, "trust": 1 },
+      "C": { "humor": 1, "adventure": 2 }
+    },
+    "variants": [
+      {
+        "id": "humor_2_bold",
+        "tendency": "bold",
+        "situation": "Your friend's cooking experiment goes horribly wrong. The meal they proudly made looks questionable and smells… creative. They set it in front of you with genuine pride.",
+        "choice_texts": {
+          "A": "Try it with theatrical bravery — 'For science!' — then give honest but kind feedback.",
+          "B": "Eat it, compliment the effort, and quietly suggest cooking together next time.",
+          "C": "Challenge them to a cook-off right now — loser orders pizza. Turn the disaster into a game."
+        }
+      },
+      {
+        "id": "humor_2_thoughtful",
+        "tendency": "thoughtful",
+        "situation": "Your friend does something genuinely embarrassing in public — trips spectacularly, sends a text to the wrong person, or calls a stranger by the wrong name. They're mortified and turning bright red.",
+        "choice_texts": {
+          "A": "Laugh WITH them and immediately top it with a story of something worse you did. Solidarity through shared embarrassment.",
+          "B": "Pretend you didn't notice and smoothly redirect attention away from them. Cover for them without making a thing of it.",
+          "C": "Lean into it dramatically — make it into a performance so people think it was intentional."
+        }
+      }
+    ]
+  }
+]
