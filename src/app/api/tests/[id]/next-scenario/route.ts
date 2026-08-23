@@ -3,6 +3,8 @@ import { getTest, getParticipant, getScenarioInstances, createScenarioInstance }
 import { renderScenario, computeTendency, defaultTendency } from "@/lib/scenarios";
 import { initRawScores, accumulateScores } from "@/lib/scoring";
 import type { RawScores, Tendency } from "@/lib/types";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { isValidUuid } from "@/lib/security";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -11,16 +13,29 @@ type RouteContext = { params: Promise<{ id: string }> };
  *
  * Returns the next scenario for a participant based on their progress
  * and running tendency signal.
+ * Rate limited to 120 requests per minute per IP.
  */
 export async function GET(request: Request, context: RouteContext) {
+  // Rate limit
+  const rateLimitResponse = checkRateLimit(request, "next_scenario", {
+    limit: 120,
+    windowSeconds: 60,
+  });
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const { id: testId } = await context.params;
+
+    if (!isValidUuid(testId)) {
+      return NextResponse.json({ error: "Invalid test ID" }, { status: 400 });
+    }
+
     const url = new URL(request.url);
     const participantId = url.searchParams.get("participant_id");
 
-    if (!participantId) {
+    if (!participantId || !isValidUuid(participantId)) {
       return NextResponse.json(
-        { error: "participant_id query parameter is required" },
+        { error: "Valid participant_id query parameter is required" },
         { status: 400 }
       );
     }

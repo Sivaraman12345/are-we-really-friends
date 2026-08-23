@@ -1,15 +1,24 @@
 import { NextResponse } from "next/server";
 import { CreateTestRequestSchema } from "@/lib/types";
-import { createTest } from "@/lib/db";
+import { createTest, logEvent } from "@/lib/db";
 import { generateStorySeed } from "@/lib/scenarios";
 import { v4 as uuidv4 } from "uuid";
-import { logEvent } from "@/lib/db";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { sanitizeDisplayName, isValidUuid } from "@/lib/security";
 
 /**
  * POST /api/tests
  * Create a new friendship test. Returns the test ID and participant A's ID.
+ * Rate limited to 15 test creations per 10 minutes per IP.
  */
 export async function POST(request: Request) {
+  // Rate limit: 15 tests per 10 minutes
+  const rateLimitResponse = checkRateLimit(request, "create_test", {
+    limit: 15,
+    windowSeconds: 600,
+  });
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const body = await request.json().catch(() => ({}));
     const parsed = CreateTestRequestSchema.safeParse(body);
@@ -21,6 +30,16 @@ export async function POST(request: Request) {
       );
     }
 
+    const sanitizedName = sanitizeDisplayName(parsed.data.display_name);
+    const parentTestId = isValidUuid(parsed.data.parent_test_id)
+      ? parsed.data.parent_test_id
+      : null;
+    const createdByParticipantId = isValidUuid(
+      parsed.data.created_by_participant_id
+    )
+      ? parsed.data.created_by_participant_id
+      : null;
+
     // Generate a test ID first, then use it to seed the story
     const testId = uuidv4();
     const storySeed = generateStorySeed(testId);
@@ -28,10 +47,10 @@ export async function POST(request: Request) {
     const { test, participant } = await createTest(
       parsed.data.relationship_type,
       storySeed,
-      parsed.data.display_name,
+      sanitizedName || undefined,
       testId,
-      parsed.data.parent_test_id,
-      parsed.data.created_by_participant_id
+      parentTestId,
+      createdByParticipantId
     );
 
     // Log event based on whether this is a root test or child test in a viral chain

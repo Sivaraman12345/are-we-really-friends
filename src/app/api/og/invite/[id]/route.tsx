@@ -1,5 +1,7 @@
 import { ImageResponse } from "next/og";
 import { getTest, getParticipantsByTestId } from "@/lib/db";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { isValidUuid, sanitizeDisplayName } from "@/lib/security";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -10,14 +12,21 @@ function truncateText(text: string, maxLength: number): string {
   return text.slice(0, maxLength - 3) + "...";
 }
 
-export async function GET(_request: Request, context: RouteContext) {
+export async function GET(request: Request, context: RouteContext) {
+  // Rate limit
+  const rateLimitResponse = checkRateLimit(request, "og_invite", {
+    limit: 60,
+    windowSeconds: 60,
+  });
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const { id: testId } = await context.params;
 
-    const test = await getTest(testId);
+    const test = isValidUuid(testId) ? await getTest(testId) : null;
     const participants = test ? await getParticipantsByTestId(testId) : [];
     const participantA = participants.find((p) => p.role === "A");
-    const rawCreatorName = participantA?.display_name?.trim();
+    const rawCreatorName = sanitizeDisplayName(participantA?.display_name);
     const creatorName = rawCreatorName
       ? truncateText(rawCreatorName, 26)
       : null;

@@ -9,6 +9,8 @@ import {
 import { computeComparison } from "@/lib/scoring";
 import { generateResultNarrative } from "@/lib/gemini";
 import type { DimensionScores } from "@/lib/types";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { isValidUuid } from "@/lib/security";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -18,10 +20,22 @@ type RouteContext = { params: Promise<{ id: string }> };
  * Returns the comparison result once both A and B have completed.
  * If the comparison hasn't been computed yet, computes it now
  * (including the Gemini narrative call if configured).
+ * Rate limited to 30 requests per minute per IP.
  */
 export async function GET(request: Request, context: RouteContext) {
+  // Rate limit
+  const rateLimitResponse = checkRateLimit(request, "get_result", {
+    limit: 30,
+    windowSeconds: 60,
+  });
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const { id: testId } = await context.params;
+
+    if (!isValidUuid(testId)) {
+      return NextResponse.json({ error: "Invalid test ID" }, { status: 400 });
+    }
 
     const test = await getTest(testId);
     if (!test) {

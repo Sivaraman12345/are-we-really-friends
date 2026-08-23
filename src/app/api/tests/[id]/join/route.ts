@@ -6,6 +6,8 @@ import {
   logEvent,
 } from "@/lib/db";
 import { JoinTestRequestSchema } from "@/lib/types";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { isValidUuid, sanitizeDisplayName } from "@/lib/security";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -14,10 +16,23 @@ type RouteContext = { params: Promise<{ id: string }> };
  *
  * Person B clicks the share link → this creates participant B.
  * Idempotent: if B already exists, returns the existing B.
+ * Rate limited to 20 requests per 10 minutes per IP.
  */
 export async function POST(request: Request, context: RouteContext) {
+  // Rate limit
+  const rateLimitResponse = checkRateLimit(request, "join_test", {
+    limit: 20,
+    windowSeconds: 600,
+  });
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const { id: testId } = await context.params;
+
+    if (!isValidUuid(testId)) {
+      return NextResponse.json({ error: "Invalid test ID" }, { status: 400 });
+    }
+
     const body = await request.json().catch(() => ({}));
     const parsed = JoinTestRequestSchema.safeParse(body);
 
@@ -38,8 +53,13 @@ export async function POST(request: Request, context: RouteContext) {
     }
 
     // Create or return existing participant B (updating display name if provided)
-    const displayName = parsed.success ? parsed.data.display_name : undefined;
-    const participantB = await createParticipantB(testId, displayName);
+    const displayName = parsed.success
+      ? sanitizeDisplayName(parsed.data.display_name)
+      : null;
+    const participantB = await createParticipantB(
+      testId,
+      displayName || undefined
+    );
     if (!participantB) {
       return NextResponse.json(
         { error: "Failed to create participant B" },
@@ -76,8 +96,19 @@ export async function POST(request: Request, context: RouteContext) {
  * to decide what screen to show).
  */
 export async function GET(request: Request, context: RouteContext) {
+  // Rate limit
+  const rateLimitResponse = checkRateLimit(request, "get_join_status", {
+    limit: 60,
+    windowSeconds: 60,
+  });
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const { id: testId } = await context.params;
+
+    if (!isValidUuid(testId)) {
+      return NextResponse.json({ error: "Invalid test ID" }, { status: 400 });
+    }
 
     const test = await getTest(testId);
     if (!test) {

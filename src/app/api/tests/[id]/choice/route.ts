@@ -10,6 +10,8 @@ import {
 } from "@/lib/db";
 import { initRawScores, accumulateScores, normalizeScores } from "@/lib/scoring";
 import { computeScoringBounds } from "@/lib/scenarios";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { isValidUuid } from "@/lib/security";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -18,10 +20,23 @@ type RouteContext = { params: Promise<{ id: string }> };
  *
  * Submit a choice for a scenario. When all 8 are done,
  * auto-computes and stores normalized dimension scores.
+ * Rate limited to 60 requests per minute per IP.
  */
 export async function POST(request: Request, context: RouteContext) {
+  // Rate limit
+  const rateLimitResponse = checkRateLimit(request, "submit_choice", {
+    limit: 60,
+    windowSeconds: 60,
+  });
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const { id: testId } = await context.params;
+
+    if (!isValidUuid(testId)) {
+      return NextResponse.json({ error: "Invalid test ID" }, { status: 400 });
+    }
+
     const body = await request.json().catch(() => ({}));
     const parsed = SubmitChoiceRequestSchema.safeParse(body);
 
@@ -55,8 +70,20 @@ export async function POST(request: Request, context: RouteContext) {
       );
     }
 
-    // Find the scenario instance for this index
+    // Find the scenario instances for this participant
     const instances = await getScenarioInstances(participant_id);
+    const priorCompletedCount = instances.filter(
+      (i) => i.chosen_option !== null
+    ).length;
+
+    // Strict sequential check: prevent skipping scenarios
+    if (scenario_index !== priorCompletedCount) {
+      return NextResponse.json(
+        { error: "Scenarios must be completed in sequential order" },
+        { status: 400 }
+      );
+    }
+
     const instance = instances.find(
       (i) => i.sequence_index === scenario_index
     );
