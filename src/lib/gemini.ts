@@ -38,6 +38,7 @@ export async function generateResultNarrative(
     const response = await fetch(`${geminiUrl()}?key=${apiKey}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      signal: AbortSignal.timeout(8000), // 8 second timeout to avoid blocking users
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
@@ -65,7 +66,7 @@ export async function generateResultNarrative(
     });
 
     if (!response.ok) {
-      console.error("Gemini API error:", response.status, await response.text());
+      console.error("Gemini API error:", response.status, await response.text().catch(() => ""));
       return getFallbackNarrative(bondScore, strongestDim, mostDifferentDim);
     }
 
@@ -78,9 +79,23 @@ export async function generateResultNarrative(
 
     const parsed = JSON.parse(text);
     const validated = GeminiResultSchema.parse(parsed);
-    return validated;
+
+    // Sanitize output text (remove unexpected HTML tags, normalize whitespace)
+    const cleanedFriendshipType = validated.friendship_type
+      .replace(/[<>'"&]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    const cleanedNarrative = validated.narrative
+      .replace(/[<>]/g, "")
+      .trim();
+
+    return {
+      friendship_type: cleanedFriendshipType || "Kindred Spirits",
+      narrative: cleanedNarrative,
+    };
   } catch (error) {
-    console.error("Gemini call failed:", error);
+    console.error("Gemini call failed or timed out:", error);
     return getFallbackNarrative(bondScore, strongestDim, mostDifferentDim);
   }
 }

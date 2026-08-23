@@ -8,18 +8,75 @@ import {
 } from "@/lib/db";
 import { computeComparison } from "@/lib/scoring";
 import { generateResultNarrative } from "@/lib/gemini";
-import type { DimensionScores } from "@/lib/types";
+import type { Comparison, DimensionScores } from "@/lib/types";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { isValidUuid } from "@/lib/security";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
+// In-memory promise map to deduplicate concurrent first result requests for the same test
+const inFlightResultGenerations = new Map<string, Promise<Comparison>>();
+
+async function getOrCreateComparison(
+  testId: string,
+  scoresA: DimensionScores,
+  scoresB: DimensionScores
+): Promise<Comparison> {
+  // Check if comparison already exists in DB
+  const existing = await getComparison(testId);
+  if (existing) return existing;
+
+  // Check if generation is already in-flight for this test
+  const inFlight = inFlightResultGenerations.get(testId);
+  if (inFlight) {
+    return inFlight;
+  }
+
+  // Create a single generation promise for all concurrent callers
+  const generationPromise = (async () => {
+    try {
+      // 1. Calculate deterministic comparison metrics first
+      const { bond_score, strongest_dimension, most_different_dimension } =
+        computeComparison(scoresA, scoresB);
+
+      // 2. Generate AI narrative (falls back to deterministic template on timeout/error)
+      const { friendship_type, narrative } = await generateResultNarrative(
+        scoresA,
+        scoresB,
+        bond_score,
+        strongest_dimension,
+        most_different_dimension
+      );
+
+      const comparison: Comparison = {
+        id: uuidv4(),
+        test_id: testId,
+        bond_score,
+        strongest_dimension,
+        most_different_dimension,
+        friendship_type,
+        narrative_summary: narrative,
+        created_at: new Date().toISOString(),
+      };
+
+      // 3. Persist comparison to DB
+      await createComparison(comparison);
+      return comparison;
+    } finally {
+      inFlightResultGenerations.delete(testId);
+    }
+  })();
+
+  inFlightResultGenerations.set(testId, generationPromise);
+  return generationPromise;
+}
+
 /**
  * GET /api/tests/[id]/result
  *
  * Returns the comparison result once both A and B have completed.
- * If the comparison hasn't been computed yet, computes it now
- * (including the Gemini narrative call if configured).
+ * If the comparison hasn't been computed yet, computes it once,
+ * stores it permanently, and returns it.
  * Rate limited to 30 requests per minute per IP.
  */
 export async function GET(request: Request, context: RouteContext) {
@@ -64,39 +121,11 @@ export async function GET(request: Request, context: RouteContext) {
       );
     }
 
-    // Check for existing comparison
-    let comparison = await getComparison(testId);
+    const scoresA = participantA.dimension_scores as DimensionScores;
+    const scoresB = participantB.dimension_scores as DimensionScores;
 
-    if (!comparison) {
-      // Compute the comparison
-      const scoresA = participantA.dimension_scores as DimensionScores;
-      const scoresB = participantB.dimension_scores as DimensionScores;
-
-      const { bond_score, strongest_dimension, most_different_dimension } =
-        computeComparison(scoresA, scoresB);
-
-      // Generate narrative via Gemini (or fallback)
-      const { friendship_type, narrative } = await generateResultNarrative(
-        scoresA,
-        scoresB,
-        bond_score,
-        strongest_dimension,
-        most_different_dimension
-      );
-
-      comparison = {
-        id: uuidv4(),
-        test_id: testId,
-        bond_score,
-        strongest_dimension,
-        most_different_dimension,
-        friendship_type,
-        narrative_summary: narrative,
-        created_at: new Date().toISOString(),
-      };
-
-      await createComparison(comparison);
-    }
+    // Get existing comparison or compute it exactly once
+    const comparison = await getOrCreateComparison(testId, scoresA, scoresB);
 
     return NextResponse.json({
       test_id: testId,
