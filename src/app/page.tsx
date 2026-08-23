@@ -105,6 +105,7 @@ function HomeContent() {
           JSON.stringify({
             testId: data.test_id,
             participantId: data.participant_id,
+            sessionToken: data.session_token ?? null,
             role: data.role,
             displayName: data.display_name,
             totalScenarios: data.total_scenarios,

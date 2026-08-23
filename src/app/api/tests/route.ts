@@ -4,7 +4,7 @@ import { createTest, logEvent } from "@/lib/db";
 import { generateStorySeed } from "@/lib/scenarios";
 import { v4 as uuidv4 } from "uuid";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { sanitizeDisplayName, isValidUuid } from "@/lib/security";
+import { sanitizeDisplayName, isValidUuid, buildUpdatedAuthCookie } from "@/lib/security";
 
 /**
  * POST /api/tests
@@ -13,7 +13,7 @@ import { sanitizeDisplayName, isValidUuid } from "@/lib/security";
  */
 export async function POST(request: Request) {
   // Rate limit: 15 tests per 10 minutes
-  const rateLimitResponse = checkRateLimit(request, "create_test", {
+  const rateLimitResponse = await checkRateLimit(request, "create_test", {
     limit: 15,
     windowSeconds: 600,
   });
@@ -76,10 +76,20 @@ export async function POST(request: Request) {
       });
     }
 
-    return NextResponse.json(
+    const cookieHeader = request.headers.get("cookie");
+    const setCookie = buildUpdatedAuthCookie(
+      test.id,
+      participant.id,
+      participant.session_token || participant.id,
+      "A",
+      cookieHeader
+    );
+
+    const response = NextResponse.json(
       {
         test_id: test.id,
         participant_id: participant.id,
+        session_token: participant.session_token,
         role: "A",
         display_name: participant.display_name,
         parent_test_id: test.parent_test_id,
@@ -89,6 +99,9 @@ export async function POST(request: Request) {
       },
       { status: 201 }
     );
+
+    response.headers.set("Set-Cookie", setCookie);
+    return response;
   } catch (error) {
     console.error("Error creating test:", error);
     return NextResponse.json(

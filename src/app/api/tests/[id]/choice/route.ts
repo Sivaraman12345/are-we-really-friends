@@ -11,7 +11,7 @@ import {
 import { initRawScores, accumulateScores, normalizeScores } from "@/lib/scoring";
 import { computeScoringBounds } from "@/lib/scenarios";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { isValidUuid } from "@/lib/security";
+import { isValidUuid, isRequestAuthorizedForParticipant } from "@/lib/security";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -24,7 +24,7 @@ type RouteContext = { params: Promise<{ id: string }> };
  */
 export async function POST(request: Request, context: RouteContext) {
   // Rate limit
-  const rateLimitResponse = checkRateLimit(request, "submit_choice", {
+  const rateLimitResponse = await checkRateLimit(request, "submit_choice", {
     limit: 60,
     windowSeconds: 60,
   });
@@ -60,6 +60,14 @@ export async function POST(request: Request, context: RouteContext) {
       return NextResponse.json(
         { error: "Participant not found for this test" },
         { status: 404 }
+      );
+    }
+
+    // IDOR protection: Verify participant session token via header, query, or secure cookie
+    if (!isRequestAuthorizedForParticipant(request, participant)) {
+      return NextResponse.json(
+        { error: "Unauthorized: Invalid participant session" },
+        { status: 401 }
       );
     }
 

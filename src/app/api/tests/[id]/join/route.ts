@@ -7,7 +7,12 @@ import {
 } from "@/lib/db";
 import { JoinTestRequestSchema } from "@/lib/types";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { isValidUuid, sanitizeDisplayName } from "@/lib/security";
+import {
+  isValidUuid,
+  sanitizeDisplayName,
+  buildUpdatedAuthCookie,
+  isRequestAuthorizedForParticipant,
+} from "@/lib/security";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -20,7 +25,7 @@ type RouteContext = { params: Promise<{ id: string }> };
  */
 export async function POST(request: Request, context: RouteContext) {
   // Rate limit
-  const rateLimitResponse = checkRateLimit(request, "join_test", {
+  const rateLimitResponse = await checkRateLimit(request, "join_test", {
     limit: 20,
     windowSeconds: 600,
   });
@@ -72,14 +77,27 @@ export async function POST(request: Request, context: RouteContext) {
       role: "B",
     });
 
-    return NextResponse.json({
+    const cookieHeader = request.headers.get("cookie");
+    const setCookie = buildUpdatedAuthCookie(
+      testId,
+      participantB.id,
+      participantB.session_token || participantB.id,
+      "B",
+      cookieHeader
+    );
+
+    const response = NextResponse.json({
       test_id: testId,
       participant_id: participantB.id,
+      session_token: participantB.session_token,
       role: "B",
       display_name: participantB.display_name,
       status: participantB.status,
       total_scenarios: 8,
     });
+
+    response.headers.set("Set-Cookie", setCookie);
+    return response;
   } catch (error) {
     console.error("Error joining test:", error);
     return NextResponse.json(
@@ -97,7 +115,7 @@ export async function POST(request: Request, context: RouteContext) {
  */
 export async function GET(request: Request, context: RouteContext) {
   // Rate limit
-  const rateLimitResponse = checkRateLimit(request, "get_join_status", {
+  const rateLimitResponse = await checkRateLimit(request, "get_join_status", {
     limit: 60,
     windowSeconds: 60,
   });
@@ -119,6 +137,11 @@ export async function GET(request: Request, context: RouteContext) {
     const participantA = participants.find((p) => p.role === "A");
     const participantB = participants.find((p) => p.role === "B");
 
+    // Check if the current caller has authorization for Participant B
+    const isCallerB = participantB
+      ? isRequestAuthorizedForParticipant(request, participantB)
+      : false;
+
     return NextResponse.json({
       test_id: testId,
       a_completed: participantA?.status === "completed",
@@ -127,6 +150,7 @@ export async function GET(request: Request, context: RouteContext) {
       b_completed: participantB?.status === "completed",
       b_participant_id: participantB?.id ?? null,
       b_name: participantB?.display_name ?? null,
+      is_current_participant: isCallerB,
     });
   } catch (error) {
     console.error("Error checking test status:", error);

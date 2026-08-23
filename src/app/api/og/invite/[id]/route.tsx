@@ -14,7 +14,7 @@ function truncateText(text: string, maxLength: number): string {
 
 export async function GET(request: Request, context: RouteContext) {
   // Rate limit
-  const rateLimitResponse = checkRateLimit(request, "og_invite", {
+  const rateLimitResponse = await checkRateLimit(request, "og_invite", {
     limit: 60,
     windowSeconds: 60,
   });

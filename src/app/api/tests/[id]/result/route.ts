@@ -81,7 +81,7 @@ async function getOrCreateComparison(
  */
 export async function GET(request: Request, context: RouteContext) {
   // Rate limit
-  const rateLimitResponse = checkRateLimit(request, "get_result", {
+  const rateLimitResponse = await checkRateLimit(request, "get_result", {
     limit: 30,
     windowSeconds: 60,
   });

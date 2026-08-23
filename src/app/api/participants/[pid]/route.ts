@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getParticipant } from "@/lib/db";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { isValidUuid } from "@/lib/security";
+import { isValidUuid, isRequestAuthorizedForParticipant } from "@/lib/security";
 
 type RouteContext = { params: Promise<{ pid: string }> };
 
@@ -14,7 +14,7 @@ type RouteContext = { params: Promise<{ pid: string }> };
  */
 export async function GET(request: Request, context: RouteContext) {
   // Rate limit
-  const rateLimitResponse = checkRateLimit(request, "get_participant", {
+  const rateLimitResponse = await checkRateLimit(request, "get_participant", {
     limit: 120,
     windowSeconds: 60,
   });
@@ -38,11 +38,20 @@ export async function GET(request: Request, context: RouteContext) {
       );
     }
 
+    // IDOR protection: Verify participant session token via header, query, or secure cookie
+    if (!isRequestAuthorizedForParticipant(request, participant)) {
+      return NextResponse.json(
+        { error: "Unauthorized: Invalid participant session" },
+        { status: 401 }
+      );
+    }
+
     return NextResponse.json({
       participant_id: participant.id,
       test_id: participant.test_id,
       role: participant.role,
       display_name: participant.display_name,
+      session_token: participant.session_token,
       status: participant.status,
     });
   } catch (error) {

@@ -13,6 +13,7 @@ interface TestJoinStatus {
   b_completed: boolean;
   b_participant_id: string | null;
   b_name?: string | null;
+  is_current_participant?: boolean;
 }
 
 type PageState =
@@ -21,6 +22,7 @@ type PageState =
   | { kind: "waiting_for_a"; status: TestJoinStatus }
   | { kind: "ready_to_join"; status: TestJoinStatus }
   | { kind: "b_in_progress"; status: TestJoinStatus }
+  | { kind: "b_taken_by_other"; status: TestJoinStatus }
   | { kind: "both_completed"; status: TestJoinStatus };
 
 /* ── Component ──────────────────────────────────────────────── */
@@ -65,7 +67,11 @@ export default function FriendJoinClient({
       } else if (status.b_completed) {
         return { kind: "both_completed", status };
       } else if (status.b_exists && status.b_participant_id) {
-        return { kind: "b_in_progress", status };
+        if (status.is_current_participant) {
+          return { kind: "b_in_progress", status };
+        } else {
+          return { kind: "b_taken_by_other", status };
+        }
       } else {
         return { kind: "ready_to_join", status };
       }
@@ -148,6 +154,7 @@ export default function FriendJoinClient({
           JSON.stringify({
             testId: data.test_id,
             participantId: data.participant_id,
+            sessionToken: data.session_token ?? null,
             role: data.role,
             displayName: data.display_name,
             totalScenarios: data.total_scenarios ?? 8,
@@ -384,7 +391,7 @@ export default function FriendJoinClient({
           </div>
         )}
 
-        {/* ── State 5: B Already in Progress ── */}
+        {/* ── State 5: B Already in Progress (Authorized Participant B) ── */}
         {state.kind === "b_in_progress" && (
           <div className="invite-card animate-fade-up animate-delay-1">
             <span className="invite-card-tag">IN PROGRESS</span>
@@ -412,6 +419,31 @@ export default function FriendJoinClient({
                 RESUME TEST
                 <span className="invite-cta-arrow">→</span>
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── State 5B: B in Progress (Unrelated Visitor) ── */}
+        {state.kind === "b_taken_by_other" && (
+          <div className="invite-card animate-fade-up animate-delay-1">
+            <span className="invite-card-tag">INVITATION ACCEPTED</span>
+            <h1 className="invite-card-title">
+              Challenge in
+              <br />
+              <em>progress.</em>
+            </h1>
+            <p className="invite-card-description">
+              {state.status.a_name
+                ? `${state.status.a_name}'s invitation has already been accepted by another friend.`
+                : "This invitation has already been accepted by another friend."}{" "}
+              Want to see how you and your friends align?
+            </p>
+
+            <div className="invite-card-actions">
+              <Link href="/" className="invite-button-primary">
+                START YOUR OWN TEST
+                <span className="invite-cta-arrow">→</span>
+              </Link>
             </div>
           </div>
         )}

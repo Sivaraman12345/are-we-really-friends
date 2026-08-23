@@ -24,6 +24,7 @@ interface ScenarioData {
 interface SessionData {
   testId: string;
   participantId: string;
+  sessionToken?: string | null;
   role: string;
   displayName?: string | null;
   totalScenarios: number;
@@ -67,6 +68,8 @@ function getShareServerSnapshot(): boolean {
 async function recoverSession(
   participantId: string
 ): Promise<SessionData | null> {
+  let storedToken: string | null = null;
+
   // Try sessionStorage first
   if (typeof window !== "undefined") {
     const stored = sessionStorage.getItem("awrf_session");
@@ -76,6 +79,9 @@ async function recoverSession(
         if (parsed.participantId === participantId && parsed.testId) {
           return parsed;
         }
+        if (parsed.sessionToken) {
+          storedToken = parsed.sessionToken;
+        }
       } catch {
         /* ignore bad JSON */
       }
@@ -84,12 +90,17 @@ async function recoverSession(
 
   // Fallback: look up via API
   try {
-    const res = await fetch(`/api/participants/${participantId}`);
+    const headers: Record<string, string> = {};
+    if (storedToken) {
+      headers["x-session-token"] = storedToken;
+    }
+    const res = await fetch(`/api/participants/${participantId}`, { headers });
     if (!res.ok) return null;
     const data = await res.json();
     const session: SessionData = {
       testId: data.test_id,
       participantId: data.participant_id,
+      sessionToken: data.session_token ?? storedToken,
       role: data.role,
       displayName: data.display_name ?? null,
       totalScenarios: 8,
@@ -145,13 +156,19 @@ export default function PlayPage({
 
   /* ── Fetch a scenario given explicit IDs ────────────────── */
   const fetchScenario = useCallback(
-    async (testId: string, pid: string, role: string) => {
+    async (testId: string, pid: string, role: string, token?: string | null) => {
       setState({ kind: "loading" });
       setSelectedChoice(null);
 
       try {
+        const headers: Record<string, string> = {};
+        if (token) {
+          headers["x-session-token"] = token;
+        }
+
         const res = await fetch(
-          `/api/tests/${testId}/next-scenario?participant_id=${pid}`
+          `/api/tests/${testId}/next-scenario?participant_id=${pid}`,
+          { headers }
         );
 
         if (!res.ok) {
@@ -205,8 +222,14 @@ export default function PlayPage({
       setSession(s);
 
       try {
+        const headers: Record<string, string> = {};
+        if (s.sessionToken) {
+          headers["x-session-token"] = s.sessionToken;
+        }
+
         const res = await fetch(
-          `/api/tests/${s.testId}/next-scenario?participant_id=${s.participantId}`
+          `/api/tests/${s.testId}/next-scenario?participant_id=${s.participantId}`,
+          { headers }
         );
         if (cancelled) return;
 
@@ -345,9 +368,16 @@ export default function PlayPage({
     });
 
     try {
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (currentSession.sessionToken) {
+        headers["x-session-token"] = currentSession.sessionToken;
+      }
+
       const res = await fetch(`/api/tests/${currentSession.testId}/choice`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({
           participant_id: currentSession.participantId,
           scenario_index: currentScenario.scenario_index,
@@ -391,7 +421,8 @@ export default function PlayPage({
         fetchScenario(
           currentSession.testId,
           currentSession.participantId,
-          currentSession.role
+          currentSession.role,
+          currentSession.sessionToken
         );
       }, 400);
     } catch (err) {

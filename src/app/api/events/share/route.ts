@@ -12,7 +12,7 @@ import { isValidUuid } from "@/lib/security";
  */
 export async function POST(request: Request) {
   // Rate limit
-  const rateLimitResponse = checkRateLimit(request, "share_event", {
+  const rateLimitResponse = await checkRateLimit(request, "share_event", {
     limit: 60,
     windowSeconds: 60,
   });

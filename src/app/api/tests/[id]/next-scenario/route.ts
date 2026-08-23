@@ -4,7 +4,7 @@ import { renderScenario, computeTendency, defaultTendency } from "@/lib/scenario
 import { initRawScores, accumulateScores } from "@/lib/scoring";
 import type { RawScores, Tendency } from "@/lib/types";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { isValidUuid } from "@/lib/security";
+import { isValidUuid, isRequestAuthorizedForParticipant } from "@/lib/security";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -17,7 +17,7 @@ type RouteContext = { params: Promise<{ id: string }> };
  */
 export async function GET(request: Request, context: RouteContext) {
   // Rate limit
-  const rateLimitResponse = checkRateLimit(request, "next_scenario", {
+  const rateLimitResponse = await checkRateLimit(request, "next_scenario", {
     limit: 120,
     windowSeconds: 60,
   });
@@ -51,6 +51,14 @@ export async function GET(request: Request, context: RouteContext) {
       return NextResponse.json(
         { error: "Participant not found for this test" },
         { status: 404 }
+      );
+    }
+
+    // IDOR protection: Verify participant session token via header, query, or secure cookie
+    if (!isRequestAuthorizedForParticipant(request, participant)) {
+      return NextResponse.json(
+        { error: "Unauthorized: Invalid participant session" },
+        { status: 401 }
       );
     }
 

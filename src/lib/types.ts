@@ -164,6 +164,7 @@ export const ParticipantSchema = z.object({
   status: ParticipantStatusSchema,
   display_name: z.string().trim().min(1).max(50).nullable().default(null),
   dimension_scores: DimensionScoresSchema.nullable(),
+  session_token: z.string().optional(),
   created_at: z.string(),
 });
 
