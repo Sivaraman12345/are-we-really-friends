@@ -16,6 +16,10 @@ interface ResultApiResponse {
   most_different_dimension: Dimension;
   friendship_type: string;
   narrative: string;
+  names?: {
+    a: string | null;
+    b: string | null;
+  };
   scores: {
     a: DimensionScores | null;
     b: DimensionScores | null;
@@ -201,14 +205,22 @@ export default function ResultsPage({
       typeof navigator !== "undefined" &&
       typeof navigator.share === "function"
     ) {
+      const nameA =
+        state.kind === "ready" && state.data.names?.a?.trim()
+          ? state.data.names.a.trim()
+          : "Participant A";
+      const nameB =
+        state.kind === "ready" && state.data.names?.b?.trim()
+          ? state.data.names.b.trim()
+          : "Participant B";
       const friendshipType =
         state.kind === "ready" ? state.data.friendship_type : "Friendship Matrix";
       const bondScore = state.kind === "ready" ? state.data.bond_score : 0;
 
       try {
         await navigator.share({
-          title: `Are We Really Friends? — ${friendshipType}`,
-          text: `We scored ${bondScore}% on the friendship matrix (${friendshipType})! See our alignment:`,
+          title: `Are We Really Friends? — ${nameA} × ${nameB}`,
+          text: `${nameA} × ${nameB} scored ${bondScore}% on Are We Really Friends? (${friendshipType}). See our friendship matrix:`,
           url: shareUrl,
         });
       } catch (err) {
@@ -352,6 +364,8 @@ export default function ResultsPage({
   const result = state.data;
   const scoresA = result.scores.a ?? ({} as Partial<DimensionScores>);
   const scoresB = result.scores.b ?? ({} as Partial<DimensionScores>);
+  const nameA = result.names?.a?.trim() || "Participant A";
+  const nameB = result.names?.b?.trim() || "Participant B";
 
   const strongestMeta =
     DIMENSION_META[result.strongest_dimension] ?? {
@@ -383,6 +397,13 @@ export default function ResultsPage({
           </div>
           <span className="results-tag">FRIENDSHIP MATRIX</span>
 
+          {/* ── Participant Names Headline ── */}
+          <div className="results-names-headline">
+            <span className="results-name-item">{nameA}</span>
+            <span className="results-names-cross">×</span>
+            <span className="results-name-item">{nameB}</span>
+          </div>
+
           <div className="results-score-wrapper">
             <span className="results-score-num">{result.bond_score}</span>
             <span className="results-score-percent">%</span>
@@ -395,11 +416,11 @@ export default function ResultsPage({
           <div className="results-hero-legend">
             <div className="results-legend-item">
               <span className="results-legend-swatch swatch-a" />
-              <span>Participant A (Creator)</span>
+              <span>{nameA}</span>
             </div>
             <div className="results-legend-item">
               <span className="results-legend-swatch swatch-b" />
-              <span>Participant B (Friend)</span>
+              <span>{nameB}</span>
             </div>
           </div>
         </section>
@@ -446,7 +467,9 @@ export default function ResultsPage({
                   <div className="results-dim-bars">
                     {/* Participant A Bar */}
                     <div className="results-bar-row">
-                      <span className="results-bar-role role-a">A</span>
+                      <span className="results-bar-role role-a" title={nameA}>
+                        {nameA.charAt(0).toUpperCase()}
+                      </span>
                       <div className="results-bar-track">
                         <div
                           className="results-bar-fill fill-a"
@@ -458,7 +481,9 @@ export default function ResultsPage({
 
                     {/* Participant B Bar */}
                     <div className="results-bar-row">
-                      <span className="results-bar-role role-b">B</span>
+                      <span className="results-bar-role role-b" title={nameB}>
+                        {nameB.charAt(0).toUpperCase()}
+                      </span>
                       <div className="results-bar-track">
                         <div
                           className="results-bar-fill fill-b"

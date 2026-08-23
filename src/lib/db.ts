@@ -75,6 +75,7 @@ async function writeDB(db: DBSchema): Promise<void> {
 export async function createTest(
   relationshipType: RelationshipType,
   storySeed: StorySeed,
+  displayName?: string,
   testId?: string
 ): Promise<{ test: Test; participant: Participant }> {
   const db = await readDB();
@@ -91,6 +92,7 @@ export async function createTest(
     test_id: test.id,
     role: "A",
     status: "in_progress",
+    display_name: displayName?.trim() || null,
     dimension_scores: null,
     created_at: new Date().toISOString(),
   };
@@ -124,7 +126,8 @@ export async function getParticipantsByTestId(
 }
 
 export async function createParticipantB(
-  testId: string
+  testId: string,
+  displayName?: string
 ): Promise<Participant | null> {
   const db = await readDB();
   const test = db.tests.find((t) => t.id === testId);
@@ -134,13 +137,20 @@ export async function createParticipantB(
   const existingB = db.participants.find(
     (p) => p.test_id === testId && p.role === "B"
   );
-  if (existingB) return existingB;
+  if (existingB) {
+    if (displayName?.trim() && !existingB.display_name) {
+      existingB.display_name = displayName.trim();
+      await writeDB(db);
+    }
+    return existingB;
+  }
 
   const participant: Participant = {
     id: uuidv4(),
     test_id: testId,
     role: "B",
     status: "in_progress",
+    display_name: displayName?.trim() || null,
     dimension_scores: null,
     created_at: new Date().toISOString(),
   };

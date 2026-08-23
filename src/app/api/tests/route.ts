@@ -28,6 +28,7 @@ export async function POST(request: Request) {
     const { test, participant } = await createTest(
       parsed.data.relationship_type,
       storySeed,
+      parsed.data.display_name,
       testId
     );
 
@@ -39,6 +40,7 @@ export async function POST(request: Request) {
         test_id: test.id,
         participant_id: participant.id,
         role: "A",
+        display_name: participant.display_name,
         total_scenarios: 8,
       },
       { status: 201 }

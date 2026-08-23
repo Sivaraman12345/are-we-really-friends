@@ -158,6 +158,7 @@ export const ParticipantSchema = z.object({
   test_id: z.string().uuid(),
   role: ParticipantRoleSchema,
   status: ParticipantStatusSchema,
+  display_name: z.string().trim().min(1).max(50).nullable().default(null),
   dimension_scores: DimensionScoresSchema.nullable(),
   created_at: z.string(),
 });
@@ -189,6 +190,7 @@ export type GeminiResult = z.infer<typeof GeminiResultSchema>;
 // ── API Request/Response Schemas ────────────────────────────────────
 export const CreateTestRequestSchema = z.object({
   relationship_type: RelationshipTypeSchema.default("best_friend"),
+  display_name: z.string().trim().min(1).max(50).optional(),
 });
 
 export const SubmitChoiceRequestSchema = z.object({
@@ -197,7 +199,9 @@ export const SubmitChoiceRequestSchema = z.object({
   chosen_option: z.enum(["A", "B", "C"]),
 });
 
-export const JoinTestRequestSchema = z.object({});
+export const JoinTestRequestSchema = z.object({
+  display_name: z.string().trim().min(1).max(50).optional(),
+});
 
 // ── Constants ───────────────────────────────────────────────────────
 export const TOTAL_SCENARIOS = 8;

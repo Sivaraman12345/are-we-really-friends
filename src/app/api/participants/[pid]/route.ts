@@ -25,6 +25,7 @@ export async function GET(_request: Request, context: RouteContext) {
       participant_id: participant.id,
       test_id: participant.test_id,
       role: participant.role,
+      display_name: participant.display_name,
       status: participant.status,
     });
   } catch (error) {

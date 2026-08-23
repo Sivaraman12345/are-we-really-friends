@@ -8,9 +8,11 @@ import Link from "next/link";
 interface TestJoinStatus {
   test_id: string;
   a_completed: boolean;
+  a_name?: string | null;
   b_exists: boolean;
   b_completed: boolean;
   b_participant_id: string | null;
+  b_name?: string | null;
 }
 
 type PageState =
@@ -31,6 +33,8 @@ export default function FriendJoinPage({
   const router = useRouter();
 
   const [state, setState] = useState<PageState>({ kind: "loading" });
+  const [displayName, setDisplayName] = useState("");
+  const [joinNameError, setJoinNameError] = useState<string | null>(null);
   const [isJoining, setIsJoining] = useState(false);
   const [joinError, setJoinError] = useState<string | null>(null);
 
@@ -93,21 +97,29 @@ export default function FriendJoinPage({
   const handleRefresh = async () => {
     setState({ kind: "loading" });
     setJoinError(null);
+    setJoinNameError(null);
     const result = await queryStatus();
     setState(result);
   };
 
   /* ── Handle Joining as Participant B ───────────────────────── */
   async function handleJoinTest() {
+    const trimmed = displayName.trim();
+    if (!trimmed) {
+      setJoinNameError("Please enter your name to accept the challenge.");
+      return;
+    }
+
     if (isJoining) return;
     setIsJoining(true);
     setJoinError(null);
+    setJoinNameError(null);
 
     try {
       const res = await fetch(`/api/tests/${testId}/join`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ display_name: trimmed }),
       });
 
       if (!res.ok) {
@@ -127,6 +139,7 @@ export default function FriendJoinPage({
             testId: data.test_id,
             participantId: data.participant_id,
             role: data.role,
+            displayName: data.display_name,
             totalScenarios: data.total_scenarios ?? 8,
           })
         );
@@ -141,7 +154,7 @@ export default function FriendJoinPage({
   }
 
   /* ── Handle Resuming Participant B ─────────────────────────── */
-  function handleResumeTest(participantId: string) {
+  function handleResumeTest(participantId: string, bName?: string | null) {
     if (typeof window !== "undefined") {
       sessionStorage.setItem(
         "awrf_session",
@@ -149,6 +162,7 @@ export default function FriendJoinPage({
           testId,
           participantId,
           role: "B",
+          displayName: bName ?? null,
           totalScenarios: 8,
         })
       );
@@ -253,9 +267,9 @@ export default function FriendJoinPage({
               <em>invited.</em>
             </h1>
             <p className="invite-card-description">
-              Your friend completed 8 situational dilemmas exploring trust, loyalty,
-              and instincts. Answer the same scenarios independently to reveal your
-              friendship matrix.
+              {state.status.a_name
+                ? `${state.status.a_name} completed 8 situational dilemmas exploring trust, loyalty, and instincts. Answer the same scenarios independently to reveal your friendship matrix.`
+                : "Your friend completed 8 situational dilemmas exploring trust, loyalty, and instincts. Answer the same scenarios independently to reveal your friendship matrix."}
             </p>
 
             <div className="invite-features">
@@ -287,6 +301,35 @@ export default function FriendJoinPage({
                     Get an AI-narrated summary and full dimension-by-dimension alignment.
                   </p>
                 </div>
+              </div>
+            </div>
+
+            {/* ── Participant B Name Input ── */}
+            <div className="name-input-section">
+              <div className="name-input-wrap">
+                <label htmlFor="friend-name" className="name-input-label">
+                  WHAT SHOULD WE CALL YOU?
+                </label>
+                <input
+                  id="friend-name"
+                  type="text"
+                  className={`name-input-field ${joinNameError ? "has-error" : ""}`}
+                  placeholder="Your name or nickname"
+                  value={displayName}
+                  onChange={(e) => {
+                    setDisplayName(e.target.value);
+                    if (joinNameError) setJoinNameError(null);
+                  }}
+                  maxLength={50}
+                  autoComplete="name"
+                />
+                {joinNameError ? (
+                  <span className="name-input-error">{joinNameError}</span>
+                ) : (
+                  <span className="name-input-hint">
+                    Your friend will see this on the final result.
+                  </span>
+                )}
               </div>
             </div>
 
@@ -336,7 +379,10 @@ export default function FriendJoinPage({
                 type="button"
                 className="invite-button-primary"
                 onClick={() =>
-                  handleResumeTest(state.status.b_participant_id!)
+                  handleResumeTest(
+                    state.status.b_participant_id!,
+                    state.status.b_name
+                  )
                 }
               >
                 RESUME TEST

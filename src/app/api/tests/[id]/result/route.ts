@@ -89,6 +89,10 @@ export async function GET(request: Request, context: RouteContext) {
       most_different_dimension: comparison.most_different_dimension,
       friendship_type: comparison.friendship_type,
       narrative: comparison.narrative_summary,
+      names: {
+        a: participantA.display_name ?? null,
+        b: participantB.display_name ?? null,
+      },
       scores: {
         a: participantA.dimension_scores,
         b: participantB.dimension_scores,

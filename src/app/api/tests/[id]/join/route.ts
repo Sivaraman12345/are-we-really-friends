@@ -1,5 +1,11 @@
 import { NextResponse } from "next/server";
-import { getTest, createParticipantB, getParticipantsByTestId, logEvent } from "@/lib/db";
+import {
+  getTest,
+  createParticipantB,
+  getParticipantsByTestId,
+  logEvent,
+} from "@/lib/db";
+import { JoinTestRequestSchema } from "@/lib/types";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -12,6 +18,8 @@ type RouteContext = { params: Promise<{ id: string }> };
 export async function POST(request: Request, context: RouteContext) {
   try {
     const { id: testId } = await context.params;
+    const body = await request.json().catch(() => ({}));
+    const parsed = JoinTestRequestSchema.safeParse(body);
 
     const test = await getTest(testId);
     if (!test) {
@@ -29,8 +37,9 @@ export async function POST(request: Request, context: RouteContext) {
       );
     }
 
-    // Create or return existing participant B
-    const participantB = await createParticipantB(testId);
+    // Create or return existing participant B (updating display name if provided)
+    const displayName = parsed.success ? parsed.data.display_name : undefined;
+    const participantB = await createParticipantB(testId, displayName);
     if (!participantB) {
       return NextResponse.json(
         { error: "Failed to create participant B" },
@@ -44,6 +53,7 @@ export async function POST(request: Request, context: RouteContext) {
       test_id: testId,
       participant_id: participantB.id,
       role: "B",
+      display_name: participantB.display_name,
       status: participantB.status,
       total_scenarios: 8,
     });
@@ -78,9 +88,11 @@ export async function GET(request: Request, context: RouteContext) {
     return NextResponse.json({
       test_id: testId,
       a_completed: participantA?.status === "completed",
+      a_name: participantA?.display_name ?? null,
       b_exists: !!participantB,
       b_completed: participantB?.status === "completed",
       b_participant_id: participantB?.id ?? null,
+      b_name: participantB?.display_name ?? null,
     });
   } catch (error) {
     console.error("Error checking test status:", error);

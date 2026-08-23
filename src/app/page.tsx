@@ -42,17 +42,29 @@ type RelType = (typeof RELATIONSHIP_OPTIONS)[number]["value"];
 export default function Home() {
   const router = useRouter();
   const [selected, setSelected] = useState<RelType>("best_friend");
+  const [displayName, setDisplayName] = useState("");
+  const [nameError, setNameError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   async function handleBeginTest() {
+    const trimmed = displayName.trim();
+    if (!trimmed) {
+      setNameError("Please enter your name to begin.");
+      return;
+    }
+
     if (isLoading) return;
     setIsLoading(true);
+    setNameError(null);
 
     try {
       const res = await fetch("/api/tests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ relationship_type: selected }),
+        body: JSON.stringify({
+          relationship_type: selected,
+          display_name: trimmed,
+        }),
       });
 
       if (!res.ok) {
@@ -69,6 +81,7 @@ export default function Home() {
             testId: data.test_id,
             participantId: data.participant_id,
             role: data.role,
+            displayName: data.display_name,
             totalScenarios: data.total_scenarios,
           })
         );
@@ -150,6 +163,35 @@ export default function Home() {
               </div>
             </button>
           ))}
+        </div>
+
+        {/* ── Participant A Name Input ────────────────────── */}
+        <div className="name-input-section animate-fade-up animate-delay-6">
+          <div className="name-input-wrap">
+            <label htmlFor="participant-name" className="name-input-label">
+              WHAT SHOULD WE CALL YOU?
+            </label>
+            <input
+              id="participant-name"
+              type="text"
+              className={`name-input-field ${nameError ? "has-error" : ""}`}
+              placeholder="Your name or nickname"
+              value={displayName}
+              onChange={(e) => {
+                setDisplayName(e.target.value);
+                if (nameError) setNameError(null);
+              }}
+              maxLength={50}
+              autoComplete="name"
+            />
+            {nameError ? (
+              <span className="name-input-error">{nameError}</span>
+            ) : (
+              <span className="name-input-hint">
+                This display name will appear on your final friendship matrix.
+              </span>
+            )}
+          </div>
         </div>
 
         {/* ── CTA ─────────────────────────────────────────── */}

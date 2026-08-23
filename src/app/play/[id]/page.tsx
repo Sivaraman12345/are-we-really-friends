@@ -25,6 +25,7 @@ interface SessionData {
   testId: string;
   participantId: string;
   role: string;
+  displayName?: string | null;
   totalScenarios: number;
 }
 
@@ -90,6 +91,7 @@ async function recoverSession(
       testId: data.test_id,
       participantId: data.participant_id,
       role: data.role,
+      displayName: data.display_name ?? null,
       totalScenarios: 8,
     };
     // Re-cache
