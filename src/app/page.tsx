@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 
 /* ── Static Data ────────────────────────────────────────────── */
@@ -38,9 +38,19 @@ const RELATIONSHIP_OPTIONS = [
 
 type RelType = (typeof RELATIONSHIP_OPTIONS)[number]["value"];
 
-/* ── Page Component ─────────────────────────────────────────── */
-export default function Home() {
+/* ── Inner Page Component ───────────────────────────────────── */
+function HomeContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const parentTestId =
+    searchParams.get("parent_test_id") ||
+    searchParams.get("from_test_id") ||
+    null;
+  const createdByParticipantId =
+    searchParams.get("created_by_participant_id") ||
+    searchParams.get("from_participant_id") ||
+    null;
+
   const [selected, setSelected] = useState<RelType>("best_friend");
   const [displayName, setDisplayName] = useState("");
   const [nameError, setNameError] = useState<string | null>(null);
@@ -64,6 +74,8 @@ export default function Home() {
         body: JSON.stringify({
           relationship_type: selected,
           display_name: trimmed,
+          parent_test_id: parentTestId,
+          created_by_participant_id: createdByParticipantId,
         }),
       });
 
@@ -258,5 +270,13 @@ export default function Home() {
         </section>
       </div>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div style={{ background: "var(--bg-primary)", minHeight: "100vh" }} />}>
+      <HomeContent />
+    </Suspense>
   );
 }

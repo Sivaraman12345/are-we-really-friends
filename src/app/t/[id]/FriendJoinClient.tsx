@@ -82,6 +82,16 @@ export default function FriendJoinClient({
   useEffect(() => {
     let ignore = false;
 
+    // Log invite_opened event (best effort)
+    fetch("/api/events", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        event_type: "invite_opened",
+        test_id: testId,
+      }),
+    }).catch(() => {});
+
     queryStatus().then((result) => {
       if (!ignore) {
         setState(result);
@@ -91,7 +101,7 @@ export default function FriendJoinClient({
     return () => {
       ignore = true;
     };
-  }, [queryStatus]);
+  }, [queryStatus, testId]);
 
   /* ── Manual retry / refresh handler ────────────────────────── */
   const handleRefresh = async () => {

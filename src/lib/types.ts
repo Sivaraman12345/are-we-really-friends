@@ -144,6 +144,10 @@ export const TestSchema = z.object({
   id: z.string().uuid(),
   relationship_type: RelationshipTypeSchema,
   story_seed: StorySeedSchema,
+  parent_test_id: z.string().uuid().nullable().default(null),
+  created_by_participant_id: z.string().uuid().nullable().default(null),
+  root_test_id: z.string().uuid(),
+  generation_depth: z.number().int().min(0).default(0),
   created_at: z.string(),
 });
 
@@ -187,10 +191,41 @@ export const GeminiResultSchema = z.object({
 
 export type GeminiResult = z.infer<typeof GeminiResultSchema>;
 
+// ── Analytics & Event System ────────────────────────────────────────
+export const EventTypeSchema = z.enum([
+  "test_created",
+  "creator_started",
+  "creator_completed",
+  "invite_opened",
+  "invite_accepted",
+  "friend_started",
+  "friend_completed",
+  "result_viewed",
+  "result_shared",
+  "another_test_clicked",
+  "new_test_created",
+]);
+
+export type EventType = z.infer<typeof EventTypeSchema>;
+
+export const AnalyticsEventSchema = z.object({
+  id: z.string().uuid(),
+  event_type: z.string(),
+  test_id: z.string().uuid().nullable().default(null),
+  participant_id: z.string().uuid().nullable().default(null),
+  role: ParticipantRoleSchema.nullable().default(null),
+  timestamp: z.string(),
+  metadata: z.record(z.string(), z.unknown()).nullable().default(null),
+});
+
+export type AnalyticsEvent = z.infer<typeof AnalyticsEventSchema>;
+
 // ── API Request/Response Schemas ────────────────────────────────────
 export const CreateTestRequestSchema = z.object({
   relationship_type: RelationshipTypeSchema.default("best_friend"),
   display_name: z.string().trim().min(1).max(50).optional(),
+  parent_test_id: z.string().uuid().optional().nullable(),
+  created_by_participant_id: z.string().uuid().optional().nullable(),
 });
 
 export const SubmitChoiceRequestSchema = z.object({
@@ -201,6 +236,14 @@ export const SubmitChoiceRequestSchema = z.object({
 
 export const JoinTestRequestSchema = z.object({
   display_name: z.string().trim().min(1).max(50).optional(),
+});
+
+export const LogEventRequestSchema = z.object({
+  event_type: z.string(),
+  test_id: z.string().uuid().optional().nullable(),
+  participant_id: z.string().uuid().optional().nullable(),
+  role: ParticipantRoleSchema.optional().nullable(),
+  metadata: z.record(z.string(), z.unknown()).optional().nullable(),
 });
 
 // ── Constants ───────────────────────────────────────────────────────

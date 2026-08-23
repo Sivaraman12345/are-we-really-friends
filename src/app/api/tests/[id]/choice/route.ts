@@ -6,6 +6,7 @@ import {
   getScenarioInstances,
   updateScenarioChoice,
   updateParticipantScores,
+  logEvent,
 } from "@/lib/db";
 import { initRawScores, accumulateScores, normalizeScores } from "@/lib/scoring";
 import { computeScoringBounds } from "@/lib/scenarios";
@@ -77,6 +78,21 @@ export async function POST(request: Request, context: RouteContext) {
     // Record the choice
     await updateScenarioChoice(instance.id, chosen_option);
 
+    // Emit started events on first choice submission
+    if (scenario_index === 0) {
+      if (participant.role === "A") {
+        await logEvent("creator_started", testId, {
+          participantId: participant.id,
+          role: "A",
+        });
+      } else {
+        await logEvent("friend_started", testId, {
+          participantId: participant.id,
+          role: "B",
+        });
+      }
+    }
+
     // Re-fetch all instances to compute progress
     const updatedInstances = await getScenarioInstances(participant_id);
     const completedCount = updatedInstances.filter(
@@ -108,6 +124,19 @@ export async function POST(request: Request, context: RouteContext) {
 
       // Persist
       await updateParticipantScores(participant_id, normalized);
+
+      // Emit completion events
+      if (participant.role === "A") {
+        await logEvent("creator_completed", testId, {
+          participantId: participant.id,
+          role: "A",
+        });
+      } else {
+        await logEvent("friend_completed", testId, {
+          participantId: participant.id,
+          role: "B",
+        });
+      }
     }
 
     return NextResponse.json({

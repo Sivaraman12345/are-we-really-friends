@@ -34,9 +34,11 @@ export async function GET(request: Request, context: RouteContext) {
 
     if (
       !participantA ||
-      !participantB ||
       participantA.status !== "completed" ||
-      participantB.status !== "completed"
+      !participantA.dimension_scores ||
+      !participantB ||
+      participantB.status !== "completed" ||
+      !participantB.dimension_scores
     ) {
       return NextResponse.json(
         {

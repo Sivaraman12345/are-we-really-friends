@@ -10,7 +10,7 @@ import { logEvent } from "@/lib/db";
 export async function POST(request: Request) {
   try {
     const body = await request.json().catch(() => ({}));
-    const testId = body.test_id;
+    const { test_id: testId, participant_id: participantId, role } = body;
 
     if (!testId || typeof testId !== "string") {
       return NextResponse.json(
@@ -19,7 +19,10 @@ export async function POST(request: Request) {
       );
     }
 
-    await logEvent("result_shared", testId);
+    await logEvent("result_shared", testId, {
+      participantId: typeof participantId === "string" ? participantId : null,
+      role: role === "A" || role === "B" ? role : null,
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

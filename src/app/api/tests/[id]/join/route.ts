@@ -47,7 +47,10 @@ export async function POST(request: Request, context: RouteContext) {
       );
     }
 
-    await logEvent("friend_joined", testId);
+    await logEvent("invite_accepted", testId, {
+      participantId: participantB.id,
+      role: "B",
+    });
 
     return NextResponse.json({
       test_id: testId,

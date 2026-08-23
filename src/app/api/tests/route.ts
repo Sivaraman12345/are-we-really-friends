@@ -29,11 +29,33 @@ export async function POST(request: Request) {
       parsed.data.relationship_type,
       storySeed,
       parsed.data.display_name,
-      testId
+      testId,
+      parsed.data.parent_test_id,
+      parsed.data.created_by_participant_id
     );
 
-    // Log event
-    await logEvent("test_started", test.id);
+    // Log event based on whether this is a root test or child test in a viral chain
+    if (test.parent_test_id) {
+      await logEvent("new_test_created", test.id, {
+        participantId: participant.id,
+        role: "A",
+        metadata: {
+          parent_test_id: test.parent_test_id,
+          created_by_participant_id: test.created_by_participant_id,
+          root_test_id: test.root_test_id,
+          generation_depth: test.generation_depth,
+        },
+      });
+    } else {
+      await logEvent("test_created", test.id, {
+        participantId: participant.id,
+        role: "A",
+        metadata: {
+          root_test_id: test.root_test_id,
+          generation_depth: 0,
+        },
+      });
+    }
 
     return NextResponse.json(
       {
@@ -41,6 +63,9 @@ export async function POST(request: Request) {
         participant_id: participant.id,
         role: "A",
         display_name: participant.display_name,
+        parent_test_id: test.parent_test_id,
+        root_test_id: test.root_test_id,
+        generation_depth: test.generation_depth,
         total_scenarios: 8,
       },
       { status: 201 }

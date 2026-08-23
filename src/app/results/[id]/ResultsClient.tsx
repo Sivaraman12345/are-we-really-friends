@@ -1,12 +1,36 @@
 "use client";
 
-import { useState, useEffect, useCallback, use, useSyncExternalStore } from "react";
+import { useState, useEffect, useCallback, use, useRef, useSyncExternalStore } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   DIMENSIONS,
   type Dimension,
   type DimensionScores,
 } from "@/lib/types";
+
+/* ── Session Retrieval Helper ───────────────────────────────── */
+function getStoredSession(testId?: string): {
+  participantId: string | null;
+  role: "A" | "B" | null;
+} {
+  if (typeof window === "undefined") return { participantId: null, role: null };
+  try {
+    const raw = sessionStorage.getItem("awrf_session");
+    if (!raw) return { participantId: null, role: null };
+    const parsed = JSON.parse(raw);
+    if (testId && parsed.testId && parsed.testId !== testId) {
+      return { participantId: null, role: null };
+    }
+    return {
+      participantId:
+        typeof parsed.participantId === "string" ? parsed.participantId : null,
+      role: parsed.role === "A" || parsed.role === "B" ? parsed.role : null,
+    };
+  } catch {
+    return { participantId: null, role: null };
+  }
+}
 
 /* ── Types ──────────────────────────────────────────────────── */
 interface ResultApiResponse {
@@ -43,7 +67,7 @@ const DIMENSION_META: Record<
   },
   loyalty: {
     label: "Loyalty",
-    description: "Steadfast support when stakes and pressures are high.",
+    description: "Defending each other, dependability, and standing ground.",
   },
   empathy: {
     label: "Empathy",
@@ -90,9 +114,11 @@ export default function ResultsClient({
   params: Promise<{ id: string }>;
 }) {
   const { id: testId } = use(params);
+  const router = useRouter();
 
   const [state, setState] = useState<ResultPageState>({ kind: "loading" });
   const [copied, setCopied] = useState(false);
+  const hasLoggedViewRef = useRef(false);
 
   // Subscribe to native share capability safely without effect setState
   const canNativeShare = useSyncExternalStore(
@@ -104,10 +130,15 @@ export default function ResultsClient({
   /* ── Share Event Analytics Logger ────────────────────────── */
   const logShareEvent = useCallback(async (tId: string) => {
     try {
+      const session = getStoredSession(tId);
       await fetch("/api/events/share", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ test_id: tId }),
+        body: JSON.stringify({
+          test_id: tId,
+          participant_id: session.participantId,
+          role: session.role,
+        }),
       });
     } catch (err) {
       console.error("Failed to log share event:", err);
@@ -162,13 +193,27 @@ export default function ResultsClient({
     queryResult().then((result) => {
       if (!ignore) {
         setState(result);
+        if (result.kind === "ready" && !hasLoggedViewRef.current) {
+          hasLoggedViewRef.current = true;
+          const session = getStoredSession(testId);
+          fetch("/api/events", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              event_type: "result_viewed",
+              test_id: testId,
+              participant_id: session.participantId,
+              role: session.role,
+            }),
+          }).catch(() => {});
+        }
       }
     });
 
     return () => {
       ignore = true;
     };
-  }, [queryResult]);
+  }, [queryResult, testId]);
 
   /* ── User-initiated Refresh Handler ────────────────────────── */
   const handleRefresh = async () => {
@@ -231,6 +276,30 @@ export default function ResultsClient({
     } else {
       handleCopyLink();
     }
+  };
+
+  /* ── Test Another Friend Handler (Viral Chain) ────────────── */
+  const handleTestAnotherFriend = () => {
+    const session = getStoredSession(testId);
+
+    // Emit another_test_clicked event (best-effort)
+    fetch("/api/events", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        event_type: "another_test_clicked",
+        test_id: testId,
+        participant_id: session.participantId,
+        role: session.role,
+      }),
+    }).catch(() => {});
+
+    const query = new URLSearchParams();
+    query.set("parent_test_id", testId);
+    if (session.participantId) {
+      query.set("created_by_participant_id", session.participantId);
+    }
+    router.push(`/?${query.toString()}`);
   };
 
   /* ── State 1: Loading ─────────────────────────────────────── */
@@ -591,10 +660,14 @@ export default function ResultsClient({
               Start a fresh experiment with a best friend, close friend, new
               acquaintance, or crush.
             </p>
-            <Link href="/" className="results-btn-gold">
+            <button
+              type="button"
+              className="results-btn-gold"
+              onClick={handleTestAnotherFriend}
+            >
               TEST ANOTHER FRIEND
               <span className="results-cta-arrow">→</span>
-            </Link>
+            </button>
           </div>
         </section>
 

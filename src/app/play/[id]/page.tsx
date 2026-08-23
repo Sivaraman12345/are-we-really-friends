@@ -132,12 +132,16 @@ export default function PlayPage({
       await fetch("/api/events/share", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ test_id: testId }),
+        body: JSON.stringify({
+          test_id: testId,
+          participant_id: participantId,
+          role: session?.role || "A",
+        }),
       });
     } catch (err) {
       console.error("Failed to log share event:", err);
     }
-  }, []);
+  }, [participantId, session]);
 
   /* ── Fetch a scenario given explicit IDs ────────────────── */
   const fetchScenario = useCallback(

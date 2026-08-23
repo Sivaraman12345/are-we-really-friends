@@ -42,17 +42,34 @@ interface ScenarioInstance {
   created_at: string;
 }
 
-interface EventRecord {
+export interface EventRecord {
   id: string;
-  test_id: string | null;
   event_type: string;
+  test_id: string | null;
+  participant_id?: string | null;
+  role?: "A" | "B" | null;
+  timestamp?: string;
   created_at: string;
+  metadata?: Record<string, unknown> | null;
 }
 
 async function readDB(): Promise<DBSchema> {
   try {
     const data = await fs.readFile(DB_PATH, "utf-8");
-    return JSON.parse(data);
+    const parsed: DBSchema = JSON.parse(data);
+    // Ensure backward compatibility for tests created before Phase 5A
+    parsed.tests = (parsed.tests || []).map((t) => ({
+      ...t,
+      parent_test_id: t.parent_test_id ?? null,
+      created_by_participant_id: t.created_by_participant_id ?? null,
+      root_test_id: t.root_test_id ?? t.id,
+      generation_depth: t.generation_depth ?? 0,
+    }));
+    parsed.participants = parsed.participants || [];
+    parsed.scenario_instances = parsed.scenario_instances || [];
+    parsed.comparisons = parsed.comparisons || [];
+    parsed.events = parsed.events || [];
+    return parsed;
   } catch {
     return {
       tests: [],
@@ -76,14 +93,59 @@ export async function createTest(
   relationshipType: RelationshipType,
   storySeed: StorySeed,
   displayName?: string,
-  testId?: string
+  testId?: string,
+  parentTestId?: string | null,
+  createdByParticipantId?: string | null
 ): Promise<{ test: Test; participant: Participant }> {
   const db = await readDB();
+  const id = testId ?? uuidv4();
+
+  let rootTestId = id;
+  let generationDepth = 0;
+  let validParentId: string | null = null;
+  let validCreatorParticipantId: string | null = null;
+
+  if (parentTestId) {
+    const parentTest = db.tests.find((t) => t.id === parentTestId);
+    if (parentTest) {
+      const parentParticipants = db.participants.filter(
+        (p) => p.test_id === parentTest.id
+      );
+
+      if (createdByParticipantId) {
+        const creatorParticipant = parentParticipants.find(
+          (p) => p.id === createdByParticipantId
+        );
+        // Valid if the participant belongs to the parent test and has completed it
+        if (creatorParticipant && creatorParticipant.status === "completed") {
+          validParentId = parentTest.id;
+          validCreatorParticipantId = creatorParticipant.id;
+          rootTestId = parentTest.root_test_id || parentTest.id;
+          generationDepth = (parentTest.generation_depth ?? 0) + 1;
+        }
+      } else {
+        // If participant ID was not provided, parent test must have at least one completed participant
+        const hasCompleted = parentParticipants.some(
+          (p) => p.status === "completed"
+        );
+        if (hasCompleted) {
+          validParentId = parentTest.id;
+          validCreatorParticipantId = null;
+          rootTestId = parentTest.root_test_id || parentTest.id;
+          generationDepth = (parentTest.generation_depth ?? 0) + 1;
+        }
+      }
+    }
+  }
 
   const test: Test = {
-    id: testId ?? uuidv4(),
+    id,
     relationship_type: relationshipType,
     story_seed: storySeed,
+    parent_test_id: validParentId,
+    created_by_participant_id: validCreatorParticipantId,
+    root_test_id: rootTestId,
+    generation_depth: generationDepth,
     created_at: new Date().toISOString(),
   };
 
@@ -241,18 +303,35 @@ export async function createComparison(
 
 // ── Events ──────────────────────────────────────────────────────────
 
+export interface LogEventOptions {
+  participantId?: string | null;
+  role?: "A" | "B" | null;
+  metadata?: Record<string, unknown> | null;
+}
+
 export async function logEvent(
   eventType: string,
-  testId?: string
+  testId?: string | null,
+  options?: LogEventOptions
 ): Promise<void> {
-  const db = await readDB();
-  db.events.push({
-    id: uuidv4(),
-    test_id: testId ?? null,
-    event_type: eventType,
-    created_at: new Date().toISOString(),
-  });
-  await writeDB(db);
+  try {
+    const db = await readDB();
+    const now = new Date().toISOString();
+    db.events.push({
+      id: uuidv4(),
+      event_type: eventType,
+      test_id: testId ?? null,
+      participant_id: options?.participantId ?? null,
+      role: options?.role ?? null,
+      timestamp: now,
+      created_at: now,
+      metadata: options?.metadata ?? null,
+    });
+    await writeDB(db);
+  } catch (error) {
+    // Best-effort: analytics errors must never break user flow
+    console.error("Failed to log event:", error);
+  }
 }
 
 export async function countShares(): Promise<number> {
