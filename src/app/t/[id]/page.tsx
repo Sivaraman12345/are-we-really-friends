@@ -29,11 +29,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description,
       type: "website",
       url: `/t/${id}`,
+      images: [
+        {
+          url: `/api/og/invite/${id}`,
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
     },
     twitter: {
-      card: "summary",
+      card: "summary_large_image",
       title,
       description,
+      images: [`/api/og/invite/${id}`],
     },
     alternates: {
       canonical: `/t/${id}`,

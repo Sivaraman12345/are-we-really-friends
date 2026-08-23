@@ -29,11 +29,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         description,
         type: "website",
         url: `/results/${id}`,
+        images: [
+          {
+            url: `/api/og/result/${id}`,
+            width: 1200,
+            height: 630,
+            alt: `${title} | A.W.R.F.`,
+          },
+        ],
       },
       twitter: {
-        card: "summary",
+        card: "summary_large_image",
         title: `${title} | A.W.R.F.`,
         description,
+        images: [`/api/og/result/${id}`],
       },
       alternates: {
         canonical: `/results/${id}`,
@@ -53,11 +62,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description,
       type: "website",
       url: `/results/${id}`,
+      images: [
+        {
+          url: `/api/og/result/${id}`,
+          width: 1200,
+          height: 630,
+          alt: `${title} | A.W.R.F.`,
+        },
+      ],
     },
     twitter: {
-      card: "summary",
+      card: "summary_large_image",
       title: `${title} | A.W.R.F.`,
       description,
+      images: [`/api/og/result/${id}`],
     },
     alternates: {
       canonical: `/results/${id}`,
