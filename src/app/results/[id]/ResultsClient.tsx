@@ -265,7 +265,7 @@ export default function ResultsClient({
       try {
         await navigator.share({
           title: `Are We Really Friends? — ${nameA} × ${nameB}`,
-          text: `${nameA} × ${nameB} scored ${bondScore}% on Are We Really Friends? (${friendshipType}). See our friendship matrix:`,
+          text: `${nameA} & ${nameB} scored ${bondScore}% (${friendshipType}) across 8 blind situational dilemmas. See our friendship matrix:`,
           url: shareUrl,
         });
       } catch (err) {
@@ -435,6 +435,20 @@ export default function ResultsClient({
   const scoresB = result.scores.b ?? ({} as Partial<DimensionScores>);
   const nameA = result.names?.a?.trim() || "Participant A";
   const nameB = result.names?.b?.trim() || "Participant B";
+
+  const session = getStoredSession(testId);
+  const otherName =
+    session.role === "B"
+      ? nameA !== "Participant A"
+        ? nameA
+        : null
+      : session.role === "A"
+      ? nameB !== "Participant B"
+        ? nameB
+        : null
+      : nameA !== "Participant A"
+      ? nameA
+      : null;
 
   const strongestMeta =
     DIMENSION_META[result.strongest_dimension] ?? {
@@ -651,21 +665,23 @@ export default function ResultsClient({
 
           <div className="results-viral-next-block">
             <span className="results-next-prompt">
-              Think you know someone else?
+              {otherName
+                ? `You've seen how you and ${otherName} align.`
+                : "You've seen your friendship alignment."}
             </span>
             <h3 className="results-next-heading">
-              Test another <em>friend.</em>
+              Who is your closest <em>match?</em>
             </h3>
             <p className="results-next-desc">
-              Start a fresh experiment with a best friend, close friend, new
-              acquaintance, or crush.
+              Test your instincts with someone else. Challenge a best friend, close
+              friend, or crush to see who truly reads your mind.
             </p>
             <button
               type="button"
               className="results-btn-gold"
               onClick={handleTestAnotherFriend}
             >
-              TEST ANOTHER FRIEND
+              CHALLENGE ANOTHER FRIEND
               <span className="results-cta-arrow">→</span>
             </button>
           </div>

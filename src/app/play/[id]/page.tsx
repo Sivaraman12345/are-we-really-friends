@@ -308,10 +308,18 @@ export default function PlayPage({
       typeof navigator !== "undefined" &&
       typeof navigator.share === "function"
     ) {
+      const displayName = session.displayName ? session.displayName.trim() : null;
+      const title = displayName
+        ? `Are We Really Friends? — ${displayName}'s Challenge`
+        : "Are We Really Friends?";
+      const text = displayName
+        ? `${displayName} just answered 8 blind dilemmas. Answer the same 8 without seeing their choices to reveal your friendship matrix:`
+        : "I just answered 8 blind situational dilemmas. Answer the same 8 without seeing my choices to reveal our friendship matrix:";
+
       try {
         await navigator.share({
-          title: "Are We Really Friends?",
-          text: "I took the friendship test. Answer the same 8 scenarios to reveal our friendship matrix!",
+          title,
+          text,
           url: shareUrl,
         });
       } catch (err) {

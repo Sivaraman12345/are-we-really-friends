@@ -52,7 +52,20 @@ function HomeContent() {
     null;
 
   const [selected, setSelected] = useState<RelType>("best_friend");
-  const [displayName, setDisplayName] = useState("");
+  const [displayName, setDisplayName] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const raw = sessionStorage.getItem("awrf_session");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed.displayName && typeof parsed.displayName === "string") {
+            return parsed.displayName;
+          }
+        }
+      } catch {}
+    }
+    return "";
+  });
   const [nameError, setNameError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -139,6 +152,14 @@ function HomeContent() {
         </section>
 
         <hr className="section-divider" />
+
+        {/* ── Viral Chain Context Banner ──────────────────── */}
+        {parentTestId && (
+          <div className="viral-chain-badge animate-fade-up">
+            <span className="viral-chain-dot" />
+            <span>CHALLENGE ANOTHER FRIEND • NEW EXPERIMENT</span>
+          </div>
+        )}
 
         {/* ── Relationship Selection ──────────────────────── */}
         <div className="section-header animate-fade-up animate-delay-2">

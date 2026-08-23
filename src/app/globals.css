@@ -2434,3 +2434,29 @@ body {
   opacity: 0.75;
   user-select: none;
 }
+
+/* ── Viral Chain Badge ──────────────────────────────────────── */
+.viral-chain-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  background: rgba(199, 168, 76, 0.08);
+  border: 1px solid rgba(199, 168, 76, 0.28);
+  border-radius: 100px;
+  font-family: var(--font-sans);
+  font-size: 0.64rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-gold);
+  margin-bottom: 20px;
+}
+
+.viral-chain-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-gold);
+  box-shadow: 0 0 8px var(--accent-gold);
+}

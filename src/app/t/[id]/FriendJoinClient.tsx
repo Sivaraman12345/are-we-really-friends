@@ -270,16 +270,30 @@ export default function FriendJoinClient({
             <div className="invite-watermark" aria-hidden="true">
               invited
             </div>
-            <span className="invite-card-tag">FRIENDSHIP CHALLENGE</span>
+            <span className="invite-card-tag">
+              {state.status.a_name
+                ? `${state.status.a_name.toUpperCase()}'S CHALLENGE`
+                : "FRIENDSHIP CHALLENGE"}
+            </span>
             <h1 className="invite-card-title">
-              You&apos;ve been
-              <br />
-              <em>invited.</em>
+              {state.status.a_name ? (
+                <>
+                  {state.status.a_name} challenged
+                  <br />
+                  <em>your instincts.</em>
+                </>
+              ) : (
+                <>
+                  You&apos;ve been
+                  <br />
+                  <em>invited.</em>
+                </>
+              )}
             </h1>
             <p className="invite-card-description">
               {state.status.a_name
-                ? `${state.status.a_name} completed 8 situational dilemmas exploring trust, loyalty, and instincts. Answer the same scenarios independently to reveal your friendship matrix.`
-                : "Your friend completed 8 situational dilemmas exploring trust, loyalty, and instincts. Answer the same scenarios independently to reveal your friendship matrix."}
+                ? `${state.status.a_name} answered 8 blind situational dilemmas. Take the same 8 scenarios without seeing their answers to reveal where your instincts align.`
+                : "Your friend answered 8 blind situational dilemmas. Take the same 8 scenarios without seeing their answers to reveal where your instincts align."}
             </p>
 
             <div className="invite-features">
