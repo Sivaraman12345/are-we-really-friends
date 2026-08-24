@@ -9,7 +9,7 @@ const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export const AUTH_COOKIE_NAME = "awrf_auth";
-const MAX_STORED_SESSIONS = 50;
+const MAX_STORED_SESSIONS = 12;
 
 export interface StoredSessionItem {
   participantId: string;
@@ -120,7 +120,8 @@ export function buildUpdatedAuthCookie(
 }
 
 /**
- * Extracts a participant session token from incoming request headers, query, or secure cookie.
+ * Extracts a participant session token from incoming request headers or secure cookie.
+ * Strictly checks x-session-token header, Authorization: Bearer, and awrf_auth cookie.
  */
 export function extractSessionToken(
   request: Request,
@@ -142,18 +143,7 @@ export function extractSessionToken(
     if (bearer.length > 0) return bearer;
   }
 
-  // 3. Check query parameter
-  try {
-    const url = new URL(request.url);
-    const queryToken = url.searchParams.get("token") || url.searchParams.get("session_token");
-    if (queryToken && queryToken.trim().length > 0) {
-      return queryToken.trim();
-    }
-  } catch {
-    // Ignore invalid URL parse
-  }
-
-  // 4. Check persistent HTTP-only cookie
+  // 3. Check persistent HTTP-only cookie
   const cookieHeader = headers.get("cookie");
   if (cookieHeader) {
     const sessions = parseAuthCookie(cookieHeader);

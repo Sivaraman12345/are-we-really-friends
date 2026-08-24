@@ -103,15 +103,14 @@ export async function POST(request: Request, context: RouteContext) {
       );
     }
 
-    if (instance.chosen_option !== null) {
+    // Record the choice atomically (prevents concurrent or duplicate submissions)
+    const updatedInstance = await updateScenarioChoice(instance.id, chosen_option);
+    if (!updatedInstance) {
       return NextResponse.json(
         { error: "Choice already submitted for this scenario" },
         { status: 400 }
       );
     }
-
-    // Record the choice
-    await updateScenarioChoice(instance.id, chosen_option);
 
     // Emit started events on first choice submission
     if (scenario_index === 0) {

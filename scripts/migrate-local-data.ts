@@ -8,6 +8,7 @@
 
 import { promises as fs } from "fs";
 import path from "path";
+import crypto from "crypto";
 import { Pool } from "@neondatabase/serverless";
 
 async function main() {
@@ -64,6 +65,12 @@ async function main() {
     const participants = db.participants || [];
     console.log(`Migrating ${participants.length} participants...`);
     for (const p of participants) {
+      // Preserve existing valid session token or generate a fresh secure random token
+      const sessionToken =
+        p.session_token && typeof p.session_token === "string" && p.session_token !== p.id
+          ? p.session_token
+          : crypto.randomBytes(32).toString("hex");
+
       await client.query(
         `INSERT INTO participants (id, test_id, role, status, display_name, dimension_scores, session_token, created_at)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -75,7 +82,7 @@ async function main() {
           p.status,
           p.display_name ?? null,
           p.dimension_scores ? JSON.stringify(p.dimension_scores) : null,
-          p.session_token || p.id,
+          sessionToken,
           p.created_at || new Date().toISOString(),
         ]
       );

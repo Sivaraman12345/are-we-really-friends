@@ -53,7 +53,14 @@ let pgPool: Pool | null = null;
 
 function getPgPool(): Pool | null {
   const connectionString = process.env.DATABASE_URL;
-  if (!connectionString) return null;
+  if (!connectionString) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "DATABASE_URL environment variable is required in production. Refusing silent fallback to local JSON file."
+      );
+    }
+    return null;
+  }
 
   if (!pgPool) {
     pgPool = new Pool({
@@ -67,6 +74,11 @@ function getPgPool(): Pool | null {
 
 // ── Local JSON Fallback Driver ───────────────────────────────────────
 async function readLocalJSON(): Promise<DBSchema> {
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "Local JSON database is disabled in production. Set DATABASE_URL to a valid PostgreSQL connection string."
+    );
+  }
   try {
     const data = await fs.readFile(DB_PATH, "utf-8");
     const parsed: DBSchema = JSON.parse(data);
@@ -373,10 +385,15 @@ export async function getParticipantsByTestId(
   return db.participants.filter((p) => p.test_id === testId);
 }
 
+export interface CreateParticipantBResult {
+  participant: Participant;
+  wasCreated: boolean;
+}
+
 export async function createParticipantB(
   testId: string,
   displayName?: string
-): Promise<Participant | null> {
+): Promise<CreateParticipantBResult | null> {
   const sessionToken = generateSessionToken();
   const now = new Date().toISOString();
 
@@ -411,14 +428,17 @@ export async function createParticipantB(
         }
         await client.query("COMMIT");
         return {
-          id: b.id,
-          test_id: b.test_id,
-          role: b.role,
-          status: b.status,
-          display_name: b.display_name,
-          dimension_scores: b.dimension_scores,
-          session_token: b.session_token,
-          created_at: new Date(b.created_at).toISOString(),
+          participant: {
+            id: b.id,
+            test_id: b.test_id,
+            role: b.role,
+            status: b.status,
+            display_name: b.display_name,
+            dimension_scores: b.dimension_scores,
+            session_token: b.session_token,
+            created_at: new Date(b.created_at).toISOString(),
+          },
+          wasCreated: false,
         };
       }
 
@@ -433,14 +453,17 @@ export async function createParticipantB(
       await client.query("COMMIT");
       const p = insertRes.rows[0];
       return {
-        id: p.id,
-        test_id: p.test_id,
-        role: p.role,
-        status: p.status,
-        display_name: p.display_name,
-        dimension_scores: p.dimension_scores,
-        session_token: p.session_token,
-        created_at: new Date(p.created_at).toISOString(),
+        participant: {
+          id: p.id,
+          test_id: p.test_id,
+          role: p.role,
+          status: p.status,
+          display_name: p.display_name,
+          dimension_scores: p.dimension_scores,
+          session_token: p.session_token,
+          created_at: new Date(p.created_at).toISOString(),
+        },
+        wasCreated: true,
       };
     } catch (error) {
       await client.query("ROLLBACK");
@@ -463,7 +486,10 @@ export async function createParticipantB(
       existingB.display_name = displayName.trim();
       await writeLocalJSON(db);
     }
-    return existingB;
+    return {
+      participant: existingB,
+      wasCreated: false,
+    };
   }
 
   const participant: Participant = {
@@ -479,7 +505,10 @@ export async function createParticipantB(
 
   db.participants.push(participant);
   await writeLocalJSON(db);
-  return participant;
+  return {
+    participant,
+    wasCreated: true,
+  };
 }
 
 export async function updateParticipantScores(
@@ -611,11 +640,11 @@ export async function updateScenarioChoice(
     const res = await pool.query(
       `UPDATE scenario_instances
        SET chosen_option = $1
-       WHERE id = $2
+       WHERE id = $2 AND chosen_option IS NULL
        RETURNING id, participant_id, sequence_index, slot_id, variant_id, rendered_scenario, chosen_option, created_at`,
       [chosenOption, instanceId]
     );
-    if (res.rows.length === 0) return null;
+    if (!res.rowCount || res.rowCount === 0 || res.rows.length === 0) return null;
     const r = res.rows[0];
     return {
       id: r.id,
@@ -634,7 +663,7 @@ export async function updateScenarioChoice(
 
   const db = await readLocalJSON();
   const instance = db.scenario_instances.find((si) => si.id === instanceId);
-  if (!instance) return null;
+  if (!instance || instance.chosen_option !== null) return null;
 
   instance.chosen_option = chosenOption;
   await writeLocalJSON(db);

@@ -88,15 +88,25 @@ function getRedisClient(): Redis | null {
   const url = process.env.UPSTASH_REDIS_REST_URL;
   const token = process.env.UPSTASH_REDIS_REST_TOKEN;
 
-  if (url && token) {
-    try {
-      redisClient = new Redis({ url, token });
-      return redisClient;
-    } catch (err) {
-      console.warn("Failed to initialize Upstash Redis, falling back to in-memory:", err);
+  if (!url || !token) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN environment variables are required in production. Refusing silent fallback to in-memory rate limiting."
+      );
     }
+    return null;
   }
-  return null;
+
+  try {
+    redisClient = new Redis({ url, token });
+    return redisClient;
+  } catch (err) {
+    if (process.env.NODE_ENV === "production") {
+      throw err;
+    }
+    console.warn("Failed to initialize Upstash Redis, falling back to in-memory:", err);
+    return null;
+  }
 }
 
 function getUpstashLimiter(config: RateLimitConfig): Ratelimit | null {
@@ -121,7 +131,7 @@ function getUpstashLimiter(config: RateLimitConfig): Ratelimit | null {
 
 /**
  * Checks and records a rate limit hit for the given key and config.
- * Uses Upstash Redis when configured, falls back to in-memory sliding window.
+ * Uses Upstash Redis when configured, falls back to in-memory sliding window in dev.
  */
 export async function rateLimit(
   key: string,
@@ -142,8 +152,17 @@ export async function rateLimit(
         resetSeconds,
       };
     } catch (error) {
+      if (process.env.NODE_ENV === "production") {
+        throw error;
+      }
       console.error("Upstash rate limit call failed, falling back to memory:", error);
     }
+  }
+
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "Distributed Upstash rate limiting is required in production."
+    );
   }
 
   // Development / fallback in-memory rate limiting

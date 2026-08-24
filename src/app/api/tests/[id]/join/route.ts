@@ -61,43 +61,58 @@ export async function POST(request: Request, context: RouteContext) {
     const displayName = parsed.success
       ? sanitizeDisplayName(parsed.data.display_name)
       : null;
-    const participantB = await createParticipantB(
+    const result = await createParticipantB(
       testId,
       displayName || undefined
     );
-    if (!participantB) {
+    if (!result) {
       return NextResponse.json(
         { error: "Failed to create participant B" },
         { status: 500 }
       );
     }
 
-    await logEvent("invite_accepted", testId, {
-      participantId: participantB.id,
-      role: "B",
-    });
+    const { participant: participantB, wasCreated } = result;
 
-    const cookieHeader = request.headers.get("cookie");
-    const setCookie = buildUpdatedAuthCookie(
-      testId,
-      participantB.id,
-      participantB.session_token || participantB.id,
-      "B",
-      cookieHeader
-    );
+    if (wasCreated) {
+      await logEvent("invite_accepted", testId, {
+        participantId: participantB.id,
+        role: "B",
+      });
 
-    const response = NextResponse.json({
+      const cookieHeader = request.headers.get("cookie");
+      const setCookie = buildUpdatedAuthCookie(
+        testId,
+        participantB.id,
+        participantB.session_token || participantB.id,
+        "B",
+        cookieHeader
+      );
+
+      const response = NextResponse.json({
+        test_id: testId,
+        participant_id: participantB.id,
+        session_token: participantB.session_token,
+        role: "B",
+        display_name: participantB.display_name,
+        status: participantB.status,
+        total_scenarios: 8,
+      });
+
+      response.headers.set("Set-Cookie", setCookie);
+      return response;
+    }
+
+    // If B already exists, preserve idempotent response but NEVER leak the session_token
+    return NextResponse.json({
       test_id: testId,
       participant_id: participantB.id,
-      session_token: participantB.session_token,
+      session_token: null,
       role: "B",
       display_name: participantB.display_name,
       status: participantB.status,
       total_scenarios: 8,
     });
-
-    response.headers.set("Set-Cookie", setCookie);
-    return response;
   } catch (error) {
     console.error("Error joining test:", error);
     return NextResponse.json(
