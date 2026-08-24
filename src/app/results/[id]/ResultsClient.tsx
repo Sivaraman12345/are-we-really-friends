@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, use, useRef, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { copyTextToClipboard } from "@/lib/clipboard";
 import {
   DIMENSIONS,
   type Dimension,
@@ -118,6 +119,7 @@ export default function ResultsClient({
 
   const [state, setState] = useState<ResultPageState>({ kind: "loading" });
   const [copied, setCopied] = useState(false);
+  const [copyFailed, setCopyFailed] = useState(false);
   const hasLoggedViewRef = useRef(false);
 
   // Subscribe to native share capability safely without effect setState
@@ -229,12 +231,22 @@ export default function ResultsClient({
         ? window.location.href
         : `/results/${testId}`;
     try {
-      await navigator.clipboard.writeText(shareUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
-      logShareEvent(testId);
+      const success = await copyTextToClipboard(shareUrl);
+      if (success) {
+        setCopied(true);
+        setCopyFailed(false);
+        setTimeout(() => setCopied(false), 2500);
+        logShareEvent(testId);
+      } else {
+        setCopyFailed(true);
+        setCopied(false);
+        setTimeout(() => setCopyFailed(false), 3000);
+      }
     } catch (err) {
       console.error("Copy failed:", err);
+      setCopyFailed(true);
+      setCopied(false);
+      setTimeout(() => setCopyFailed(false), 3000);
     }
   };
 
@@ -244,7 +256,6 @@ export default function ResultsClient({
       typeof window !== "undefined"
         ? window.location.href
         : `/results/${testId}`;
-    logShareEvent(testId);
 
     if (
       typeof navigator !== "undefined" &&
@@ -268,9 +279,11 @@ export default function ResultsClient({
           text: `${nameA} & ${nameB} scored ${bondScore}% (${friendshipType}) across 8 blind situational dilemmas. See our friendship matrix:`,
           url: shareUrl,
         });
+        logShareEvent(testId);
       } catch (err) {
         if ((err as Error).name !== "AbortError") {
           console.error("Native share error:", err);
+          handleCopyLink();
         }
       }
     } else {
@@ -643,6 +656,8 @@ export default function ResultsClient({
               >
                 {copied ? (
                   "LINK COPIED TO CLIPBOARD!"
+                ) : copyFailed ? (
+                  "COULD NOT COPY LINK"
                 ) : (
                   <>
                     SHARE YOUR RESULT
@@ -656,7 +671,11 @@ export default function ResultsClient({
                 className="results-btn-secondary"
                 onClick={handleCopyLink}
               >
-                {copied ? "COPIED!" : "COPY RESULT LINK"}
+                {copied
+                  ? "COPIED!"
+                  : copyFailed
+                  ? "COPY FAILED"
+                  : "COPY RESULT LINK"}
               </button>
             </div>
           </div>

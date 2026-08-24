@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, use, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { copyTextToClipboard } from "@/lib/clipboard";
 
 /* ── Types ──────────────────────────────────────────────────── */
 interface ScenarioChoice {
@@ -129,6 +130,7 @@ export default function PlayPage({
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [copyFailed, setCopyFailed] = useState(false);
 
   // Subscribe to native share capability safely without effect setState
   const canNativeShare = useSyncExternalStore(
@@ -270,23 +272,24 @@ export default function PlayPage({
     };
   }, [participantId, router]);
 
-  /* ── Polling for Participant B completion (Participant A only) ── */
+  /* ── Polling effect on the completed/waiting screen ──────── */
   useEffect(() => {
     if (state.kind !== "completed" || !session || session.role !== "A") {
       return;
     }
 
-    const testId = session.testId;
     let isSubscribed = true;
 
     async function checkPartnerStatus() {
+      if (!session) return;
       try {
-        const res = await fetch(`/api/tests/${testId}/join`);
-        if (!res.ok || !isSubscribed) return;
+        const res = await fetch(`/api/tests/${session.testId}/join`);
+        if (!res.ok) return;
         const data = await res.json();
+
+        // If B has finished, navigate to results page
         if (data.b_completed && isSubscribed) {
-          isSubscribed = false;
-          router.push(`/results/${testId}`);
+          router.push(`/results/${session.testId}`);
         }
       } catch (err) {
         console.error("Polling partner status error:", err);
@@ -311,12 +314,22 @@ export default function PlayPage({
     const testId = session.testId;
     const shareUrl = `${window.location.origin}/t/${testId}`;
     try {
-      await navigator.clipboard.writeText(shareUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
-      logShareEvent(testId);
+      const success = await copyTextToClipboard(shareUrl);
+      if (success) {
+        setCopied(true);
+        setCopyFailed(false);
+        setTimeout(() => setCopied(false), 2500);
+        logShareEvent(testId);
+      } else {
+        setCopyFailed(true);
+        setCopied(false);
+        setTimeout(() => setCopyFailed(false), 3000);
+      }
     } catch (err) {
       console.error("Copy failed:", err);
+      setCopyFailed(true);
+      setCopied(false);
+      setTimeout(() => setCopyFailed(false), 3000);
     }
   };
 
@@ -325,7 +338,6 @@ export default function PlayPage({
     if (!session) return;
     const testId = session.testId;
     const shareUrl = `${window.location.origin}/t/${testId}`;
-    logShareEvent(testId);
 
     if (
       typeof navigator !== "undefined" &&
@@ -345,9 +357,11 @@ export default function PlayPage({
           text,
           url: shareUrl,
         });
+        logShareEvent(testId);
       } catch (err) {
         if ((err as Error).name !== "AbortError") {
           console.error("Native share error:", err);
+          handleCopyLink();
         }
       }
     } else {
@@ -543,7 +557,7 @@ export default function PlayPage({
                 className="play-share-copy-btn"
                 onClick={handleCopyLink}
               >
-                {copied ? "COPIED" : "COPY"}
+                {copied ? "COPIED" : copyFailed ? "FAILED" : "COPY"}
               </button>
             </div>
 
@@ -553,7 +567,11 @@ export default function PlayPage({
                 className="play-btn-primary"
                 onClick={handleCopyLink}
               >
-                {copied ? "LINK COPIED!" : "COPY INVITATION LINK"}
+                {copied
+                  ? "LINK COPIED!"
+                  : copyFailed
+                  ? "COULD NOT COPY (SELECT MANUALLY)"
+                  : "COPY INVITATION LINK"}
                 <span className="play-cta-arrow">→</span>
               </button>
 
